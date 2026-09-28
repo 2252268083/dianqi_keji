@@ -1,456 +1,2200 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>顶级游戏辅助自助商城</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #0b1120; }
-        
-        .glass-panel {
-            background: linear-gradient(145deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.9) 100%);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(56, 189, 248, 0.15);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-        }
-        
-        .tech-border {
-            position: relative;
-            overflow: hidden;
-        }
-        .tech-border::after {
-            content: ''; position: absolute; bottom: 0; left: -100%; width: 100%; height: 2px;
-            background: linear-gradient(90deg, transparent, #38bdf8, transparent);
-            animation: scanline 2s linear infinite;
-        }
-        @keyframes scanline { 100% { left: 100%; } }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PLC气动控制系统接线图解 · 电气技能节</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='10' y='25' width='80' height='50' rx='4' fill='%231a2332' stroke='%23f59e0b' stroke-width='3'/><text x='50' y='58' font-size='28' text-anchor='middle' fill='%23f59e0b' font-family='monospace' font-weight='bold'>PLC</text></svg>">
+<style>
+/* ===== 设计 Token ===== */
+:root{
+  --bg:#0f1419;
+  --bg-soft:#161d27;
+  --bg-card:#1c2530;
+  --bg-card-hover:#232e3c;
+  --border:#2a3644;
+  --border-soft:#1f2a38;
+  --text:#e2e8f0;
+  --text-dim:#94a3b8;
+  --text-mute:#64748b;
+  --accent:#f59e0b;
+  --accent-soft:rgba(245,158,11,.15);
+  --accent-glow:rgba(245,158,11,.35);
+  --green:#22c55e;
+  --yellow:#eab308;
+  --red:#ef4444;
+  --blue:#3b82f6;
+  --wire-red:#ef4444;
+  --wire-blue:#3b82f6;
+  --mono:'JetBrains Mono','Fira Code','SF Mono',Consolas,'Courier New',monospace;
+  --sans:'PingFang SC','Microsoft YaHei','Noto Sans SC',system-ui,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  font-family:var(--sans);
+  background:var(--bg);
+  color:var(--text);
+  line-height:1.7;
+  font-size:15px;
+  overflow-x:hidden;
+}
+/* 网格背景 */
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  background-image:
+    linear-gradient(rgba(245,158,11,.03) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(245,158,11,.03) 1px,transparent 1px);
+  background-size:40px 40px;
+  pointer-events:none;
+  z-index:0;
+}
+.wrap{max-width:1200px;margin:0 auto;padding:0 24px;position:relative;z-index:1}
 
-        .neon-text { text-shadow: 0 0 10px rgba(56, 189, 248, 0.5); }
-        
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.5); border-radius: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #38bdf8; border-radius: 4px; }
-        
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); z-index: 50; align-items: center; justify-content: center; padding: 1rem; }
-        
-        .tab-btn { transition: all 0.3s ease; border-bottom: 2px solid transparent; color: #94a3b8; }
-        .tab-btn.active { color: #38bdf8; border-bottom-color: #38bdf8; background: rgba(56, 189, 248, 0.1); text-shadow: 0 0 8px rgba(56,189,248,0.4); }
-        
-        .product-card { transition: all 0.2s ease; border: 1px solid rgba(51, 65, 85, 0.8); }
-        .product-card:hover { border-color: rgba(56, 189, 248, 0.4); background: rgba(30, 41, 59, 0.8); }
-        .product-card.selected { 
-            border-color: #38bdf8; 
-            background: rgba(14, 165, 233, 0.1); 
-            box-shadow: 0 0 15px rgba(56, 189, 248, 0.2) inset;
-        }
-        
-        .tag-reco { background: linear-gradient(90deg, #f59e0b, #ef4444); color: white; }
-        .tag-stable { background: linear-gradient(90deg, #10b981, #059669); color: white; }
-    </style>
+/* ===== 导航 ===== */
+.nav{
+  position:sticky;top:0;z-index:100;
+  background:rgba(15,20,25,.85);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+}
+.nav-inner{
+  max-width:1200px;margin:0 auto;padding:0 24px;
+  display:flex;align-items:center;justify-content:space-between;
+  height:56px;
+}
+.nav-logo{
+  font-family:var(--mono);font-weight:700;font-size:15px;
+  color:var(--accent);letter-spacing:.5px;
+  display:flex;align-items:center;gap:8px;
+}
+.nav-logo svg{width:22px;height:22px}
+.nav-links{display:flex;gap:4px;flex-wrap:wrap}
+.nav-links a{
+  color:var(--text-dim);text-decoration:none;font-size:13px;
+  padding:6px 12px;border-radius:6px;transition:.2s;
+}
+.nav-links a:hover{color:var(--text);background:var(--bg-card)}
+@media(max-width:768px){.nav-links{display:none}}
+
+/* ===== Hero ===== */
+.hero{
+  padding:80px 0 60px;
+  border-bottom:1px solid var(--border-soft);
+  position:relative;
+}
+.hero-tag{
+  display:inline-flex;align-items:center;gap:6px;
+  font-family:var(--mono);font-size:12px;color:var(--accent);
+  background:var(--accent-soft);
+  border:1px solid rgba(245,158,11,.3);
+  padding:4px 12px;border-radius:20px;margin-bottom:20px;
+}
+.hero-tag .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.hero h1{
+  font-size:clamp(28px,5vw,44px);
+  font-weight:800;line-height:1.2;
+  margin-bottom:16px;letter-spacing:-.5px;
+}
+.hero h1 span{color:var(--accent)}
+.hero p{
+  font-size:16px;color:var(--text-dim);
+  max-width:640px;margin-bottom:32px;
+}
+.hero-meta{
+  display:flex;gap:24px;flex-wrap:wrap;
+  font-family:var(--mono);font-size:13px;color:var(--text-mute);
+}
+.hero-meta span{display:flex;align-items:center;gap:6px}
+.hero-meta b{color:var(--text);font-weight:600}
+
+/* ===== 通用区块 ===== */
+section{padding:64px 0;border-bottom:1px solid var(--border-soft)}
+.sec-head{margin-bottom:36px}
+.sec-num{
+  font-family:var(--mono);font-size:13px;color:var(--accent);
+  letter-spacing:2px;margin-bottom:8px;
+}
+.sec-title{
+  font-size:clamp(22px,3.5vw,30px);font-weight:700;
+  margin-bottom:8px;
+}
+.sec-desc{color:var(--text-dim);font-size:14px;max-width:680px}
+
+/* ===== 卡片 ===== */
+.card{
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:20px;
+  transition:.25s;
+}
+.card:hover{border-color:rgba(245,158,11,.3);background:var(--bg-card-hover)}
+.card-title{
+  font-weight:600;font-size:15px;margin-bottom:12px;
+  display:flex;align-items:center;gap:8px;
+}
+.card-title .badge{
+  font-family:var(--mono);font-size:11px;
+  padding:2px 8px;border-radius:4px;
+  background:var(--accent-soft);color:var(--accent);
+}
+
+/* ===== 系统架构流 ===== */
+.flow-chain{
+  display:flex;align-items:stretch;gap:0;
+  overflow-x:auto;padding:16px 0;
+}
+.flow-node{
+  flex:1;min-width:140px;
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:16px 12px;
+  text-align:center;
+  position:relative;
+}
+.flow-node .icon{
+  width:40px;height:40px;margin:0 auto 10px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;background:var(--bg-soft);
+}
+.flow-node .icon svg{width:24px;height:24px}
+.flow-node .label{font-size:13px;font-weight:600;margin-bottom:4px}
+.flow-node .sub{font-size:11px;color:var(--text-mute);font-family:var(--mono)}
+.flow-arrow{
+  display:flex;align-items:center;justify-content:center;
+  min-width:36px;color:var(--accent);
+}
+.flow-arrow svg{width:20px;height:20px}
+@media(max-width:768px){
+  .flow-chain{flex-direction:column;align-items:center}
+  .flow-arrow{transform:rotate(90deg);min-width:auto;min-height:24px}
+  .flow-node{width:100%;max-width:280px}
+}
+
+/* ===== PLC 接线图 ===== */
+.plc-diagram{
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:24px;
+  position:relative;
+  overflow:hidden;
+}
+.plc-grid{
+  display:grid;
+  grid-template-columns:1fr auto 1fr;
+  gap:24px;
+  align-items:start;
+}
+@media(max-width:900px){.plc-grid{grid-template-columns:1fr}}
+.plc-side{display:flex;flex-direction:column;gap:6px}
+.plc-side-title{
+  font-family:var(--mono);font-size:12px;
+  color:var(--text-mute);letter-spacing:1px;
+  text-transform:uppercase;margin-bottom:8px;
+  padding-bottom:6px;border-bottom:1px solid var(--border);
+}
+.plc-row{
+  display:flex;align-items:center;gap:10px;
+  padding:6px 10px;border-radius:6px;
+  cursor:pointer;transition:.2s;
+  border:1px solid transparent;
+}
+.plc-row:hover{background:var(--bg-soft);border-color:var(--border)}
+.plc-row.active{background:var(--accent-soft);border-color:var(--accent)}
+.plc-terminal{
+  font-family:var(--mono);font-weight:700;font-size:13px;
+  width:42px;text-align:center;
+  padding:4px 0;border-radius:4px;
+  background:var(--bg-soft);border:1px solid var(--border);
+  color:var(--text);
+  flex-shrink:0;
+}
+.plc-terminal.in{color:var(--blue)}
+.plc-terminal.out{color:var(--green)}
+.plc-comp{
+  font-size:13px;flex:1;
+  display:flex;align-items:center;gap:6px;
+}
+.plc-comp .sw{
+  width:28px;height:16px;border-radius:3px;
+  border:1.5px solid var(--text-dim);
+  position:relative;flex-shrink:0;
+}
+.plc-comp .sw::after{
+  content:'';position:absolute;
+  width:10px;height:10px;border-radius:50%;
+  background:var(--text-dim);top:2px;left:2px;
+}
+.plc-comp .lamp{
+  width:14px;height:14px;border-radius:50%;
+  border:2px solid var(--text-dim);flex-shrink:0;
+}
+.plc-comp .lamp.yellow{border-color:var(--yellow);background:rgba(234,179,8,.2)}
+.plc-comp .lamp.green{border-color:var(--green);background:rgba(34,197,94,.2)}
+.plc-comp .lamp.red{border-color:var(--red);background:rgba(239,68,68,.2)}
+.plc-comp .relay{
+  width:20px;height:14px;border-radius:2px;
+  border:1.5px solid var(--text-dim);
+  font-family:var(--mono);font-size:9px;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--text-dim);flex-shrink:0;
+}
+.plc-comp .name{color:var(--text-dim);font-size:12px}
+.plc-comp .name b{color:var(--text);font-weight:600}
+.plc-comp .nc-tag{
+  font-family:var(--mono);font-size:10px;
+  color:var(--red);background:rgba(239,68,68,.1);
+  padding:1px 5px;border-radius:3px;
+}
+.plc-center{
+  display:flex;flex-direction:column;align-items:center;
+  padding-top:20px;
+}
+.plc-body{
+  background:linear-gradient(180deg,#253040,#1a2332);
+  border:2px solid var(--border);
+  border-radius:8px;
+  padding:16px 12px;
+  width:130px;
+  text-align:center;
+  position:relative;
+}
+.plc-body::before{
+  content:'';position:absolute;top:-2px;left:-2px;right:-2px;bottom:-2px;
+  border-radius:8px;
+  border:1px dashed rgba(245,158,11,.3);
+  pointer-events:none;
+}
+.plc-brand{
+  font-family:var(--mono);font-size:11px;color:var(--text-mute);
+  margin-bottom:4px;
+}
+.plc-model{
+  font-family:var(--mono);font-weight:700;font-size:15px;
+  color:var(--accent);letter-spacing:.5px;
+  margin-bottom:12px;
+}
+.plc-leds{
+  display:flex;justify-content:center;gap:4px;margin-bottom:10px;
+}
+.plc-led{
+  width:8px;height:8px;border-radius:50%;
+  background:var(--bg);border:1px solid var(--border);
+}
+.plc-led.on{background:var(--green);box-shadow:0 0 6px var(--green)}
+.plc-ports{
+  display:flex;flex-direction:column;gap:4px;
+  font-family:var(--mono);font-size:10px;color:var(--text-mute);
+}
+.plc-port{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:4px;padding:2px 6px;border-radius:3px;
+  background:var(--bg-soft);
+}
+.plc-port b{color:var(--text-dim)}
+
+/* 详情面板 */
+.detail-panel{
+  margin-top:20px;
+  background:var(--bg-soft);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:20px;
+  min-height:80px;
+  transition:.3s;
+}
+.detail-panel.empty{
+  display:flex;align-items:center;justify-content:center;
+  color:var(--text-mute);font-size:13px;
+  font-style:italic;
+}
+.detail-panel h4{
+  font-size:15px;font-weight:600;margin-bottom:8px;
+  display:flex;align-items:center;gap:8px;
+}
+.detail-panel h4 .term{
+  font-family:var(--mono);font-size:13px;
+  padding:2px 8px;border-radius:4px;
+}
+.detail-panel h4 .term.in{background:rgba(59,130,246,.15);color:var(--blue)}
+.detail-panel h4 .term.out{background:rgba(34,197,94,.15);color:var(--green)}
+.detail-panel p{font-size:13px;color:var(--text-dim);margin-bottom:6px}
+.detail-panel .spec-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+  gap:8px;margin-top:10px;
+}
+.detail-panel .spec{
+  background:var(--bg-card);border-radius:6px;padding:8px 10px;
+}
+.detail-panel .spec .k{font-size:11px;color:var(--text-mute);font-family:var(--mono)}
+.detail-panel .spec .v{font-size:13px;font-weight:600;margin-top:2px}
+
+/* ===== 气动回路 ===== */
+.pneu-diagram{
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:24px;
+  position:relative;
+}
+.pneu-svg-wrap{
+  width:100%;overflow-x:auto;
+  display:flex;justify-content:center;
+}
+.pneu-svg-wrap svg{max-width:100%;height:auto}
+.pneu-controls{
+  display:flex;gap:12px;justify-content:center;
+  margin-top:20px;flex-wrap:wrap;
+}
+.btn{
+  padding:10px 20px;border-radius:8px;
+  border:1px solid var(--border);
+  background:var(--bg-soft);color:var(--text);
+  font-size:13px;cursor:pointer;transition:.2s;
+  font-family:var(--sans);
+  display:inline-flex;align-items:center;gap:6px;
+}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.primary{
+  background:var(--accent);color:#000;border-color:var(--accent);
+  font-weight:600;
+}
+.btn.primary:hover{background:#fbbf24;color:#000}
+.btn.active{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+
+/* ===== 布局规范 ===== */
+.layout-grid{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:16px;
+}
+@media(min-width:640px){.layout-grid{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:1000px){.layout-grid{grid-template-columns:repeat(4,1fr)}}
+.layout-demo{
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:24px;
+}
+.layout-demo h4{
+  font-size:14px;font-weight:600;margin-bottom:16px;
+  display:flex;align-items:center;gap:8px;
+}
+.layout-demo h4 .tag{
+  font-family:var(--mono);font-size:11px;
+  padding:2px 8px;border-radius:4px;
+  background:var(--bg-soft);color:var(--text-dim);
+}
+.panel-mockup{
+  background:linear-gradient(135deg,#d4c5a9,#c4b393);
+  border-radius:6px;padding:24px 16px;
+  position:relative;
+  border:2px solid #a89878;
+}
+.panel-mockup::before{
+  content:'';position:absolute;inset:6px;
+  border:1px dashed rgba(0,0,0,.15);border-radius:3px;
+  pointer-events:none;
+}
+.panel-row{
+  display:flex;justify-content:center;align-items:center;
+  gap:16px;min-height:50px;position:relative;z-index:1;
+}
+.mock-btn{
+  width:32px;height:32px;border-radius:50%;
+  border:2px solid rgba(0,0,0,.3);
+  display:flex;align-items:center;justify-content:center;
+  font-size:9px;font-weight:700;color:rgba(0,0,0,.5);
+  position:relative;
+}
+.mock-btn.estop{
+  width:40px;height:40px;
+  background:radial-gradient(circle at 35% 35%,#ff6b6b,#c0392b);
+  border-color:#8b0000;border-width:3px;
+  box-shadow:0 2px 6px rgba(0,0,0,.3);
+}
+.mock-btn.estop::after{
+  content:'急停';position:absolute;bottom:-16px;
+  font-size:10px;color:#5a4a3a;white-space:nowrap;
+}
+.mock-btn.start{background:radial-gradient(circle at 35% 35%,#6bcf7f,#27ae60);border-color:#1e8449}
+.mock-btn.stop{background:radial-gradient(circle at 35% 35%,#e74c3c,#c0392b);border-color:#922b21}
+.mock-btn.manual{background:radial-gradient(circle at 35% 35%,#5dade2,#2980b9);border-color:#1f618d}
+.mock-lamp{
+  width:24px;height:24px;border-radius:50%;
+  border:2px solid rgba(0,0,0,.3);
+  position:relative;
+}
+.mock-lamp.green{background:radial-gradient(circle at 35% 35%,#6bcf7f,#27ae60)}
+.mock-lamp.yellow{background:radial-gradient(circle at 35% 35%,#f4d03f,#d4ac0d)}
+.mock-lamp.red{background:radial-gradient(circle at 35% 35%,#e74c3c,#c0392b)}
+.mock-lamp::after{
+  content:attr(data-label);position:absolute;bottom:-18px;
+  left:50%;transform:translateX(-50%);
+  font-size:10px;color:#5a4a3a;white-space:nowrap;
+}
+.mock-divider{
+  width:2px;height:36px;background:rgba(0,0,0,.2);
+  margin:0 4px;
+}
+.dim-note{
+  margin-top:28px;font-size:12px;color:var(--text-mute);
+  font-family:var(--mono);line-height:1.8;
+}
+.dim-note b{color:var(--accent)}
+
+/* 灯塔 */
+.tower-demo{
+  display:flex;flex-direction:column;align-items:center;
+  gap:0;
+}
+.tower-stack{
+  display:flex;flex-direction:column;align-items:center;
+}
+.tower-layer{
+  width:48px;height:28px;
+  border:2px solid rgba(0,0,0,.3);
+  position:relative;
+}
+.tower-layer.red{
+  background:linear-gradient(180deg,#e74c3c,#c0392b);
+  border-radius:6px 6px 0 0;
+}
+.tower-layer.yellow{
+  background:linear-gradient(180deg,#f4d03f,#d4ac0d);
+  border-top:none;border-bottom:none;
+}
+.tower-layer.green{
+  background:linear-gradient(180deg,#6bcf7f,#27ae60);
+  border-radius:0 0 6px 6px;
+}
+.tower-base{
+  width:40px;height:20px;
+  background:linear-gradient(180deg,#e0e0e0,#b0b0b0);
+  border-radius:0 0 4px 4px;
+  border:1px solid #999;
+}
+.tower-label{
+  margin-top:12px;font-size:12px;color:var(--text-dim);
+  text-align:center;
+}
+
+/* 尺寸表 */
+.dim-table{
+  width:100%;border-collapse:collapse;
+  font-size:13px;margin-top:16px;
+}
+.dim-table th,.dim-table td{
+  padding:10px 12px;text-align:left;
+  border-bottom:1px solid var(--border);
+}
+.dim-table th{
+  font-family:var(--mono);font-size:11px;
+  color:var(--text-mute);text-transform:uppercase;
+  letter-spacing:.5px;font-weight:600;
+  background:var(--bg-soft);
+}
+.dim-table td{color:var(--text-dim)}
+.dim-table td b{color:var(--accent);font-family:var(--mono)}
+
+/* ===== 工作流程 ===== */
+.workflow{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:16px;
+  counter-reset:step;
+}
+@media(min-width:560px){.workflow{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:900px){.workflow{grid-template-columns:repeat(3,1fr)}}
+.wf-step{
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:20px;
+  position:relative;
+  counter-increment:step;
+}
+.wf-step::before{
+  content:counter(step,decimal-leading-zero);
+  font-family:var(--mono);font-size:28px;font-weight:800;
+  color:var(--accent);opacity:.3;
+  position:absolute;top:12px;right:16px;
+}
+.wf-step .wf-icon{
+  width:36px;height:36px;border-radius:8px;
+  background:var(--accent-soft);
+  display:flex;align-items:center;justify-content:center;
+  margin-bottom:12px;
+}
+.wf-step .wf-icon svg{width:20px;height:20px;color:var(--accent)}
+.wf-step h5{font-size:14px;font-weight:600;margin-bottom:6px}
+.wf-step p{font-size:12px;color:var(--text-dim);line-height:1.6}
+
+/* ===== 注意事项 ===== */
+.warn-list{display:flex;flex-direction:column;gap:12px}
+.warn-item{
+  display:flex;gap:12px;
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  border-left:3px solid var(--accent);
+  border-radius:0 8px 8px 0;
+  padding:14px 16px;
+}
+.warn-item.danger{border-left-color:var(--red)}
+.warn-item .wi-icon{
+  width:28px;height:28px;border-radius:6px;
+  background:var(--accent-soft);
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+.warn-item.danger .wi-icon{background:rgba(239,68,68,.15)}
+.warn-item .wi-icon svg{width:16px;height:16px;color:var(--accent)}
+.warn-item.danger .wi-icon svg{color:var(--red)}
+.warn-item .wi-text{font-size:13px;color:var(--text-dim)}
+.warn-item .wi-text b{color:var(--text);font-weight:600}
+
+/* ===== Footer ===== */
+footer{
+  padding:40px 0;text-align:center;
+  color:var(--text-mute);font-size:12px;
+  font-family:var(--mono);
+}
+footer .divider{
+  width:40px;height:2px;background:var(--border);
+  margin:0 auto 16px;
+}
+
+/* ===== 系统联动动画 ===== */
+.sys-anim{
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:24px;
+  position:relative;
+}
+.sys-svg-wrap{width:100%;overflow-x:auto;display:flex;justify-content:center}
+.sys-svg-wrap svg{max-width:100%;height:auto}
+.sys-controls{
+  display:flex;gap:12px;justify-content:center;
+  margin-top:20px;flex-wrap:wrap;align-items:center;
+}
+.sys-status{
+  margin-top:16px;
+  background:var(--bg-soft);
+  border-radius:8px;padding:12px 16px;
+  font-family:var(--mono);font-size:13px;
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+}
+@media(max-width:600px){
+  .sys-status{font-size:12px;padding:10px 12px}
+  .sys-status span[style*="margin-left"]{margin-left:0 !important;width:100%;font-size:11px}
+}
+.sys-status .st-label{color:var(--text-mute)}
+.sys-status .st-val{color:var(--accent);font-weight:600}
+.sys-status .st-dot{
+  width:10px;height:10px;border-radius:50%;
+  background:var(--text-mute);flex-shrink:0;
+}
+.sys-status .st-dot.on{background:var(--green);box-shadow:0 0 8px var(--green)}
+.sys-legend{
+  display:flex;gap:20px;justify-content:center;
+  margin-top:14px;flex-wrap:wrap;
+  font-size:12px;color:var(--text-dim);
+}
+.sys-legend span{display:flex;align-items:center;gap:6px}
+.sys-legend .wire-sample{
+  width:24px;height:3px;border-radius:2px;
+}
+
+/* 电压标签 */
+.vtag{
+  font-family:var(--mono);font-size:10px;
+  padding:2px 6px;border-radius:3px;
+  background:rgba(245,158,11,.12);
+  color:var(--accent);border:1px solid rgba(245,158,11,.25);
+}
+.vtag.gnd{background:rgba(100,116,139,.15);color:var(--text-mute);border-color:rgba(100,116,139,.3)}
+.vtag.hot{background:rgba(239,68,68,.12);color:var(--red);border-color:rgba(239,68,68,.25)}
+
+/* ===== 梯形图 ===== */
+.ladder-section{
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:24px;
+  overflow-x:auto;
+}
+.ladder-svg-wrap{width:100%;overflow-x:auto}
+.ladder-svg-wrap svg{display:block;min-width:700px}
+.ladder-network{
+  margin-bottom:24px;
+}
+.ladder-net-title{
+  font-family:var(--mono);font-size:12px;
+  color:var(--accent);margin-bottom:8px;
+  padding-left:8px;border-left:3px solid var(--accent);
+}
+.ladder-code{
+  background:var(--bg-soft);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:16px;
+  font-family:var(--mono);font-size:13px;
+  line-height:1.8;color:var(--text-dim);
+  overflow-x:auto;
+  white-space:pre;
+}
+.ladder-code .kw{color:var(--accent)}
+.ladder-code .cm{color:var(--text-mute);font-style:italic}
+.ladder-code .num{color:var(--green)}
+.ladder-code .dev{color:var(--blue)}
+
+.program-tabs{
+  display:flex;gap:4px;margin-bottom:16px;
+  border-bottom:1px solid var(--border);
+}
+.program-tab{
+  padding:8px 16px;font-size:13px;cursor:pointer;
+  color:var(--text-dim);border-bottom:2px solid transparent;
+  transition:.2s;background:none;border-top:none;border-left:none;border-right:none;
+  font-family:var(--sans);
+}
+.program-tab:hover{color:var(--text)}
+.program-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.program-pane{display:none}
+.program-pane.active{display:block}
+
+/* 响应式 */
+@media(max-width:600px){
+  .hero{padding:48px 0 36px}
+  section{padding:40px 0}
+  .plc-grid{gap:16px}
+  .plc-body{width:100%}
+  body{font-size:15px}
+  .sec-title{font-size:22px}
+  .hero h1{font-size:28px}
+  .btn{min-height:44px;padding:10px 16px;font-size:14px}
+  .program-tab{min-height:44px;padding:10px 14px;font-size:13px}
+  .plc-row{padding:8px 10px}
+  .sys-controls .btn{min-width:140px;justify-content:center}
+  .dim-table{font-size:12px}
+  .dim-table th,.dim-table td{padding:8px 8px}
+  .card{padding:16px}
+  .panel-mockup{padding:20px 12px}
+  .panel-row{gap:12px}
+  .mock-btn{width:28px;height:28px}
+  .mock-btn.estop{width:36px;height:36px}
+  .mock-lamp{width:22px;height:22px}
+  .wf-step{padding:16px}
+  .ladder-code{font-size:12px;padding:12px}
+}
+@media(max-width:400px){
+  .hero-meta{gap:12px;font-size:12px}
+  .sys-status{font-size:12px}
+  .sys-legend{font-size:11px;gap:12px}
+}
+</style>
 </head>
-<body class="text-slate-200 min-h-screen flex justify-center sm:py-6">
+<body>
 
-<div class="w-full max-w-md relative pb-10">
-    
-    <!-- 背景装饰光晕 -->
-    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full h-64 bg-sky-500/10 blur-[80px] pointer-events-none"></div>
+<!-- ===== 导航 ===== -->
+<nav class="nav">
+  <div class="nav-inner">
+    <div class="nav-logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10h2M7 14h2M15 10h2M15 14h2"/></svg>
+      X3U-18MT 接线图解
+    </div>
+    <div class="nav-links">
+      <a href="#arch">系统架构</a>
+      <a href="#plc">PLC接线</a>
+      <a href="#pneu">气动回路</a>
+      <a href="#syanim">联动动画</a>
+      <a href="#layout">面板布局</a>
+      <a href="#workflow">工作流程</a>
+      <a href="#program">PLC程序</a>
+      <a href="#notes">注意事项</a>
+    </div>
+  </div>
+</nav>
 
-    <div class="glass-panel p-5 mb-5 sm:rounded-2xl relative z-10">
-        <!-- 头部按钮 -->
-        <div class="flex flex-wrap items-center justify-between gap-2 mb-5">
-            <div class="flex gap-2">
-                <button onclick="openModal('supportModal')" class="tech-border bg-slate-800/80 hover:bg-slate-700 px-3 py-2 rounded-lg text-xs font-bold text-sky-400 transition flex items-center gap-1.5 border border-sky-500/30">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
-                    客服
-                </button>
-                <button onclick="openModal('complainModal')" class="tech-border bg-red-900/30 hover:bg-red-800/50 px-2 sm:px-3 py-2 rounded-lg text-[11px] sm:text-xs font-bold text-red-400 transition flex items-center gap-1.5 border border-red-500/30 shadow-[0_0_10px_rgba(239,68,68,0.1)]">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                    投诉(诈骗\售假等)
-                </button>
-                <button onclick="openModal('refundModal')" class="tech-border bg-orange-900/30 hover:bg-orange-800/50 px-2 sm:px-3 py-2 rounded-lg text-[11px] sm:text-xs font-bold text-orange-400 transition flex items-center gap-1.5 border border-orange-500/30 shadow-[0_0_10px_rgba(249,115,22,0.1)]">
-                    💰 退款
-                </button>
+<!-- ===== Hero ===== -->
+<header class="hero">
+  <div class="wrap">
+    <div class="hero-tag"><span class="dot"></span>电气技能节 · 实训装置图解</div>
+    <h1>PLC 气动控制系统<br><span>接线原理全解析</span></h1>
+    <p>基于 X3U-18MT 晶体管输出型 PLC，配合二位五通电磁阀与双作用气缸的典型竞赛装置。从输入信号到气动执行，逐层拆解每一根线的去向与作用。</p>
+    <div class="hero-meta">
+      <span>PLC 型号 <b>X3U-18MT</b></span>
+      <span>输入点 <b>6 路已用</b></span>
+      <span>输出点 <b>4 路已用</b></span>
+      <span>气动元件 <b>双作用气缸</b></span>
+    </div>
+  </div>
+</header>
+
+<!-- ===== 系统架构 ===== -->
+<section id="arch">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="sec-num">01 / SYSTEM OVERVIEW</div>
+      <h2 class="sec-title">系统架构总览</h2>
+      <p class="sec-desc">整个系统采用"弱电控制强电、PLC间接驱动气动"的架构，PLC输出端不直接接电磁阀，而是通过中间继电器KA中转，实现强弱电隔离。</p>
+    </div>
+    <div class="flow-chain">
+      <div class="flow-node">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--blue)"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg></div>
+        <div class="label">输入元件</div>
+        <div class="sub">SB×3 / SQ×2 / ES-1</div>
+      </div>
+      <div class="flow-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+      <div class="flow-node">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--accent)"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10h2M7 14h2M15 10h2M15 14h2"/></svg></div>
+        <div class="label">PLC 控制器</div>
+        <div class="sub">X3U-18MT</div>
+      </div>
+      <div class="flow-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+      <div class="flow-node">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--green)"><rect x="3" y="8" width="18" height="8" rx="2"/><path d="M7 12h2M15 12h2"/></svg></div>
+        <div class="label">中间继电器</div>
+        <div class="sub">KA (Y0驱动)</div>
+      </div>
+      <div class="flow-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+      <div class="flow-node">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--yellow)"><path d="M4 12h16M4 12l4-4M4 12l4 4M20 12l-4-4M20 12l-4 4"/></svg></div>
+        <div class="label">电磁阀 YV</div>
+        <div class="sub">二位五通 单电控</div>
+      </div>
+      <div class="flow-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+      <div class="flow-node">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--red)"><rect x="2" y="9" width="14" height="6" rx="1"/><path d="M16 12h6M18 9v6"/></svg></div>
+        <div class="label">双作用气缸</div>
+        <div class="sub">SQ1/SQ2 反馈</div>
+      </div>
+    </div>
+    <div style="margin-top:24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px">
+      <div class="card">
+        <div class="card-title"><span class="badge">输入侧</span>源型 PNP 接法</div>
+        <p style="font-size:13px;color:var(--text-dim)">公共端 GND 接 0V，开关另一端并联接 DC24V+。按下开关时 X 点得到 24V 高电平，内部 LED 点亮。</p>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="badge">输出侧</span>晶体管源型</div>
+        <p style="font-size:13px;color:var(--text-dim)">公共端接 DC24V+，负载另一端接 GND。Y 点输出高电平时负载得电。Y0/Y1 支持高速脉冲输出。</p>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="badge">气动侧</span>继电器隔离</div>
+        <p style="font-size:13px;color:var(--text-dim)">PLC 的 Y0 只能输出小电流，通过 KA 中间继电器的常开触点控制电磁阀 YV 线圈，实现强弱电隔离。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== PLC 接线图 ===== -->
+<section id="plc">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="sec-num">02 / PLC WIRING</div>
+      <h2 class="sec-title">PLC 接线图（交互式）</h2>
+      <p class="sec-desc">点击下方任意端子或元件，查看该点位的详细说明、接线方式和功能定义。</p>
+    </div>
+    <div class="plc-diagram">
+      <div class="plc-grid">
+        <!-- 输入侧 -->
+        <div class="plc-side">
+          <div class="plc-side-title">▸ 输入 INPUT (X)</div>
+          <div class="plc-row" data-term="X0" data-type="in" data-name="SB1 启动按钮" data-comp="常开按钮" data-wire="一端接X0，另一端接DC24V+" data-func="系统启动按钮，按下后触发自动运行流程" data-note="常开触点，按下时X0得电">
+            <div class="plc-terminal in">X0</div>
+            <div class="plc-comp"><span class="sw"></span><span class="name"><b>SB1</b> 启动</span></div>
+          </div>
+          <div class="plc-row" data-term="X1" data-type="in" data-name="SB2 停止按钮" data-comp="常开按钮" data-wire="一端接X1，另一端接DC24V+" data-func="系统停止/复位按钮，按下后停止当前运行" data-note="常开触点，按下时X1得电">
+            <div class="plc-terminal in">X1</div>
+            <div class="plc-comp"><span class="sw"></span><span class="name"><b>SB2</b> 停止</span></div>
+          </div>
+          <div class="plc-row" data-term="X2" data-type="in" data-name="SB3 手动/单步按钮" data-comp="常开按钮" data-wire="一端接X2，另一端接DC24V+" data-func="手动操作或单步运行按钮，用于调试和点动" data-note="常开触点，按下时X2得电">
+            <div class="plc-terminal in">X2</div>
+            <div class="plc-comp"><span class="sw"></span><span class="name"><b>SB3</b> 手动</span></div>
+          </div>
+          <div class="plc-row" data-term="X3" data-type="in" data-name="SQ1 伸出到位行程开关" data-comp="常开磁性开关" data-wire="一端接X3，另一端接DC24V+" data-func="气缸伸出到右极限时触发，告知PLC气缸已伸出到位" data-note="安装在气缸右端，磁性开关，气缸活塞到达时灯亮">
+            <div class="plc-terminal in">X3</div>
+            <div class="plc-comp"><span class="sw"></span><span class="name"><b>SQ1</b> 伸出到位</span></div>
+          </div>
+          <div class="plc-row" data-term="X4" data-type="in" data-name="SQ2 缩回到位行程开关" data-comp="常开磁性开关" data-wire="一端接X4，另一端接DC24V+" data-func="气缸缩回到左极限时触发，告知PLC气缸已缩回到位" data-note="安装在气缸左端，磁性开关，气缸活塞到达时灯亮">
+            <div class="plc-terminal in">X4</div>
+            <div class="plc-comp"><span class="sw"></span><span class="name"><b>SQ2</b> 缩回到位</span></div>
+          </div>
+          <div class="plc-row" data-term="X5" data-type="in" data-name="ES-1 急停按钮" data-comp="常闭按钮（NC）" data-wire="一端接X5，另一端接DC24V+" data-func="紧急停止按钮，拍下后立即切断所有输出" data-note="常闭触点！正常时X5得电，拍下急停时X5失电触发中断">
+            <div class="plc-terminal in">X5</div>
+            <div class="plc-comp"><span class="sw"></span><span class="name"><b>ES-1</b> 急停</span><span class="nc-tag">NC常闭</span></div>
+          </div>
+          <div class="plc-row" data-term="X6-X11" data-type="in" data-name="预留输入点" data-comp="未使用" data-wire="悬空" data-func="预留，可扩展更多输入元件" data-note="X6/X7/X10/X11共4点预留">
+            <div class="plc-terminal in">X6~</div>
+            <div class="plc-comp"><span class="name" style="color:var(--text-mute)">预留（未使用）</span></div>
+          </div>
+        </div>
+
+        <!-- PLC 主体 -->
+        <div class="plc-center">
+          <div class="plc-body">
+            <div class="plc-brand">信捷风格</div>
+            <div class="plc-model">X3U-18MT</div>
+            <div class="plc-leds">
+              <div class="plc-led on"></div>
+              <div class="plc-led on"></div>
+              <div class="plc-led"></div>
+              <div class="plc-led"></div>
             </div>
-            <button onclick="openModal('orderModal')" class="tech-border bg-slate-800/80 hover:bg-slate-700 px-3 py-2 rounded-lg text-xs font-bold text-sky-400 transition flex items-center gap-1.5 border border-sky-500/30">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                查单
-            </button>
-        </div>
-        
-        <!-- 官方店铺名片 -->
-        <div class="flex items-center gap-4 bg-gradient-to-r from-slate-800/60 to-slate-800/30 p-4 rounded-xl border border-sky-500/20 shadow-inner">
-            <!-- 头像 -->
-            <div class="w-14 h-14 rounded-full border-2 border-sky-400/50 overflow-hidden flex-shrink-0 shadow-[0_0_10px_rgba(56,189,248,0.3)] bg-slate-700 relative">
-                <img src="https://img.remit.ee/api/file/BQACAgUAAyEGAASHRsPbAAEX6RtqZYOPmZps11v-UsZ8aQwT6S3sYgACZhwAApXfKFfvKYVTvpWyJD0E.jpg" alt="Avatar" class="w-full h-full object-cover">
+            <div class="plc-ports">
+              <div class="plc-port"><span>电源</span><b>24V DC</b></div>
+              <div class="plc-port"><span>输出</span><b>晶体管</b></div>
+              <div class="plc-port"><span>通讯</span><b>232/485</b></div>
             </div>
-            
-            <!-- 店铺信息 -->
-            <div class="flex flex-col flex-1">
-                <div class="flex items-center gap-1.5">
-                    <h1 class="text-lg font-bold text-white tracking-wide neon-text">川川官方店</h1>
-                    <!-- 官方认证蓝色打勾图标 -->
-                    <svg class="w-4 h-4 text-sky-400 drop-shadow-[0_0_5px_rgba(56,189,248,0.8)]" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-                    </svg>
-                </div>
-                
-                <div class="flex items-center gap-3 mt-1.5 text-[11px]">
-                    <span class="text-slate-400">12 商品</span>
-                    <!-- 盾牌与保证金 -->
-                    <div class="flex items-center gap-1 text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded-full border border-emerald-400/20 shadow-[0_0_8px_rgba(16,185,129,0.15)]">
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
-                        </svg>
-                        <span class="font-bold tracking-wider">保证金 1500元</span>
-                    </div>
-                </div>
+          </div>
+        </div>
+
+        <!-- 输出侧 -->
+        <div class="plc-side">
+          <div class="plc-side-title">▸ 输出 OUTPUT (Y)</div>
+          <div class="plc-row" data-term="Y0" data-type="out" data-name="KA 中间继电器线圈" data-comp="继电器线圈 DC24V" data-wire="Y0接KA线圈正极，KA线圈负极接GND" data-func="Y0输出时KA吸合，KA常开触点闭合控制电磁阀YV" data-note="建议KA线圈并联续流二极管，保护PLC输出点">
+            <div class="plc-terminal out">Y0</div>
+            <div class="plc-comp"><span class="relay">KA</span><span class="name"><b>KA</b> 中间继电器</span></div>
+          </div>
+          <div class="plc-row" data-term="Y1" data-type="out" data-name="A灯 黄色指示灯" data-comp="黄色指示灯 DC24V" data-wire="Y1接黄灯正极，黄灯负极接GND" data-func="待机/准备状态指示，系统上电就绪时点亮" data-note="对应面板A灯（黄）和三色灯塔中间层黄灯">
+            <div class="plc-terminal out">Y1</div>
+            <div class="plc-comp"><span class="lamp yellow"></span><span class="name"><b>A灯</b> 黄色（待机）</span></div>
+          </div>
+          <div class="plc-row" data-term="Y2" data-type="out" data-name="B灯 绿色指示灯" data-comp="绿色指示灯 DC24V" data-wire="Y2接绿灯正极，绿灯负极接GND" data-func="运行状态指示，系统自动运行中点亮" data-note="对应面板B灯（绿）和三色灯塔底层绿灯">
+            <div class="plc-terminal out">Y2</div>
+            <div class="plc-comp"><span class="lamp green"></span><span class="name"><b>B灯</b> 绿色（运行）</span></div>
+          </div>
+          <div class="plc-row" data-term="Y3" data-type="out" data-name="C灯 红色指示灯" data-comp="红色指示灯 DC24V" data-wire="Y3接红灯正极，红灯负极接GND" data-func="故障/停止/报警指示，急停或故障时点亮" data-note="对应面板C灯（红）和三色灯塔顶层红灯">
+            <div class="plc-terminal out">Y3</div>
+            <div class="plc-comp"><span class="lamp red"></span><span class="name"><b>C灯</b> 红色（故障）</span></div>
+          </div>
+          <div class="plc-row" data-term="Y4-Y7" data-type="out" data-name="预留输出点" data-comp="未使用" data-wire="悬空" data-func="预留，可扩展更多输出负载" data-note="Y4/Y5/Y6/Y7共4点预留，均为晶体管输出">
+            <div class="plc-terminal out">Y4~</div>
+            <div class="plc-comp"><span class="name" style="color:var(--text-mute)">预留（未使用）</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 详情面板 -->
+      <div class="detail-panel empty" id="detailPanel">
+        点击上方任意端子，查看详细接线说明
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 气动回路 ===== -->
+<section id="pneu">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="sec-num">03 / PNEUMATIC CIRCUIT</div>
+      <h2 class="sec-title">气动回路原理（可动画演示）</h2>
+      <p class="sec-desc">二位五通单电控电磁阀控制双作用气缸伸缩。点击按钮观看气流走向和气缸动作，红色为加压气路，灰色为排气。</p>
+    </div>
+    <div class="pneu-diagram">
+      <div class="pneu-svg-wrap">
+        <svg viewBox="0 0 800 360" width="800" height="360" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+              <path d="M0,0 L8,3 L0,6 Z" fill="#f59e0b"/>
+            </marker>
+            <marker id="arrowRed" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+              <path d="M0,0 L8,3 L0,6 Z" fill="#ef4444"/>
+            </marker>
+          </defs>
+
+          <!-- 气源处理 -->
+          <g id="airSource">
+            <circle cx="40" cy="180" r="14" fill="none" stroke="#94a3b8" stroke-width="2"/>
+            <path d="M40 166 L40 194 M33 173 L40 180 L47 173" fill="none" stroke="#94a3b8" stroke-width="2"/>
+            <text x="40" y="215" text-anchor="middle" fill="#64748b" font-size="11" font-family="monospace">气源</text>
+            <!-- 过滤减压阀 -->
+            <rect x="70" y="165" width="40" height="30" rx="3" fill="#1c2530" stroke="#475569" stroke-width="1.5"/>
+            <circle cx="90" cy="180" r="8" fill="none" stroke="#64748b" stroke-width="1.5"/>
+            <line x1="90" y1="172" x2="90" y2="188" stroke="#64748b" stroke-width="1"/>
+            <text x="90" y="215" text-anchor="middle" fill="#64748b" font-size="10" font-family="monospace">过滤减压阀</text>
+            <!-- 单向阀 -->
+            <path d="M125 180 L145 180" stroke="#94a3b8" stroke-width="2"/>
+            <polygon points="140,174 150,180 140,186" fill="#94a3b8"/>
+            <line x1="150" y1="174" x2="150" y2="186" stroke="#94a3b8" stroke-width="2"/>
+            <text x="148" y="215" text-anchor="middle" fill="#64748b" font-size="10" font-family="monospace">单向阀</text>
+          </g>
+
+          <!-- 主管路 -->
+          <path d="M54 180 L70 180" stroke="#94a3b8" stroke-width="2.5" fill="none"/>
+          <path d="M110 180 L125 180" stroke="#94a3b8" stroke-width="2.5" fill="none"/>
+          <path id="mainPipe" d="M150 180 L240 180" stroke="#94a3b8" stroke-width="2.5" fill="none"/>
+
+          <!-- 电磁阀 -->
+          <g id="solenoid">
+            <rect x="240" y="130" width="120" height="100" rx="4" fill="#1c2530" stroke="#475569" stroke-width="2"/>
+            <text x="300" y="122" text-anchor="middle" fill="#f59e0b" font-size="12" font-family="monospace" font-weight="bold">YV 二位五通电磁阀</text>
+
+            <!-- 阀位1（常态，弹簧复位位）-->
+            <g id="valvePos1" opacity="1">
+              <rect x="245" y="135" width="55" height="90" rx="2" fill="#161d27" stroke="#334155" stroke-width="1"/>
+              <!-- P->B (1->2) -->
+              <path d="M260 220 L260 195 L285 195 L285 160" stroke="#64748b" stroke-width="1.5" fill="none"/>
+              <!-- A->R (4->3) -->
+              <path d="M300 160 L300 185 L275 185 L275 220" stroke="#64748b" stroke-width="1.5" fill="none"/>
+              <text x="272" y="155" text-anchor="middle" fill="#64748b" font-size="9" font-family="monospace">常态位</text>
+            </g>
+            <!-- 阀位2（得电位）-->
+            <g id="valvePos2" opacity="0.3">
+              <rect x="300" y="135" width="55" height="90" rx="2" fill="#161d27" stroke="#334155" stroke-width="1"/>
+              <!-- P->A (1->4) -->
+              <path d="M315 220 L315 195 L340 195 L340 160" stroke="#64748b" stroke-width="1.5" fill="none"/>
+              <!-- B->S (2->5) -->
+              <path d="M330 160 L330 185 L305 185 L305 220" stroke="#64748b" stroke-width="1.5" fill="none"/>
+              <text x="327" y="155" text-anchor="middle" fill="#64748b" font-size="9" font-family="monospace">得电位</text>
+            </g>
+
+            <!-- 接口编号 -->
+            <text x="258" y="242" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="monospace" font-weight="bold">1</text>
+            <text x="283" y="242" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="monospace" font-weight="bold">2</text>
+            <text x="305" y="242" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="monospace" font-weight="bold">3</text>
+            <text x="328" y="242" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="monospace" font-weight="bold">5</text>
+            <text x="348" y="242" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="monospace" font-weight="bold">4</text>
+            <text x="300" y="258" text-anchor="middle" fill="#64748b" font-size="9" font-family="monospace">P·B·R·S·A（从左到右）</text>
+
+            <!-- 线圈 -->
+            <rect x="365" y="160" width="20" height="40" rx="3" fill="#161d27" stroke="#475569" stroke-width="1.5"/>
+            <text x="375" y="184" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="monospace">YV</text>
+            <text x="375" y="215" text-anchor="middle" fill="#64748b" font-size="10" font-family="monospace">线圈</text>
+            <!-- 弹簧 -->
+            <path d="M230 155 L235 160 L225 165 L235 170 L225 175 L235 180 L225 185 L235 190 L225 195 L230 200" stroke="#64748b" stroke-width="1.5" fill="none"/>
+            <text x="228" y="215" text-anchor="middle" fill="#64748b" font-size="10" font-family="monospace">弹簧</text>
+
+            <!-- 消声器 -->
+            <g id="muffler3">
+              <rect x="298" y="250" width="14" height="18" rx="2" fill="#1c2530" stroke="#475569" stroke-width="1"/>
+              <line x1="301" y1="254" x2="301" y2="264" stroke="#64748b" stroke-width="1"/>
+              <line x1="305" y1="254" x2="305" y2="264" stroke="#64748b" stroke-width="1"/>
+              <line x1="309" y1="254" x2="309" y2="264" stroke="#64748b" stroke-width="1"/>
+              <text x="305" y="280" text-anchor="middle" fill="#64748b" font-size="9" font-family="monospace">消声器</text>
+            </g>
+            <g id="muffler5">
+              <rect x="323" y="250" width="14" height="18" rx="2" fill="#1c2530" stroke="#475569" stroke-width="1"/>
+              <line x1="326" y1="254" x2="326" y2="264" stroke="#64748b" stroke-width="1"/>
+              <line x1="330" y1="254" x2="330" y2="264" stroke="#64748b" stroke-width="1"/>
+              <line x1="334" y1="254" x2="334" y2="264" stroke="#64748b" stroke-width="1"/>
+            </g>
+            <path d="M305 225 L305 250" stroke="#64748b" stroke-width="1.5"/>
+            <path d="M330 225 L330 250" stroke="#64748b" stroke-width="1.5"/>
+          </g>
+
+          <!-- 气路连接 -->
+          <!-- 1口进气 -->
+          <path id="pipe1" d="M260 225 L260 180 L240 180" stroke="#94a3b8" stroke-width="2.5" fill="none"/>
+          <!-- 2口到气缸有杆腔(右) -->
+          <path id="pipe2" d="M285 160 L285 100 L580 100 L580 140" stroke="#94a3b8" stroke-width="2.5" fill="none"/>
+          <!-- 4口到气缸无杆腔(左) -->
+          <path id="pipe4" d="M340 160 L340 80 L460 80 L460 140" stroke="#94a3b8" stroke-width="2.5" fill="none"/>
+
+          <!-- 气缸 -->
+          <g id="cylinder">
+            <!-- 缸筒 -->
+            <rect x="440" y="140" width="160" height="60" rx="4" fill="#1c2530" stroke="#475569" stroke-width="2"/>
+            <!-- 端盖左 -->
+            <rect x="435" y="135" width="10" height="70" rx="2" fill="#334155" stroke="#475569" stroke-width="1"/>
+            <!-- 端盖右 -->
+            <rect x="595" y="135" width="10" height="70" rx="2" fill="#334155" stroke="#475569" stroke-width="1"/>
+            <!-- 活塞 -->
+            <g id="piston">
+              <rect x="480" y="145" width="12" height="50" rx="2" fill="#f59e0b" stroke="#d97706" stroke-width="1"/>
+              <!-- 活塞杆 -->
+              <rect x="492" y="163" width="110" height="14" rx="2" fill="#94a3b8" stroke="#64748b" stroke-width="1"/>
+            </g>
+            <!-- 气缸接口 -->
+            <circle cx="460" cy="140" r="4" fill="#475569"/>
+            <circle cx="580" cy="140" r="4" fill="#475569"/>
+            <text x="460" y="128" text-anchor="middle" fill="#64748b" font-size="10" font-family="monospace">无杆腔</text>
+            <text x="580" y="128" text-anchor="middle" fill="#64748b" font-size="10" font-family="monospace">有杆腔</text>
+
+            <!-- 磁性开关 SQ2 (左) -->
+            <g id="sq2">
+              <rect x="445" y="205" width="24" height="14" rx="2" fill="#161d27" stroke="#3b82f6" stroke-width="1.5"/>
+              <circle cx="457" cy="212" r="3" fill="#3b82f6" id="sq2Led"/>
+              <text x="457" y="232" text-anchor="middle" fill="#3b82f6" font-size="10" font-family="monospace" font-weight="bold">SQ2</text>
+              <text x="457" y="244" text-anchor="middle" fill="#64748b" font-size="9" font-family="monospace">缩回</text>
+            </g>
+            <!-- 磁性开关 SQ1 (右) -->
+            <g id="sq1">
+              <rect x="570" y="205" width="24" height="14" rx="2" fill="#161d27" stroke="#3b82f6" stroke-width="1.5"/>
+              <circle cx="582" cy="212" r="3" fill="#3b82f6" id="sq1Led"/>
+              <text x="582" y="232" text-anchor="middle" fill="#3b82f6" font-size="10" font-family="monospace" font-weight="bold">SQ1</text>
+              <text x="582" y="244" text-anchor="middle" fill="#64748b" font-size="9" font-family="monospace">伸出</text>
+            </g>
+          </g>
+
+          <!-- 电气控制回路（左下角）-->
+          <g id="elecCtrl">
+            <text x="60" y="300" fill="#64748b" font-size="11" font-family="monospace">电气控制：</text>
+            <rect x="120" y="288" width="30" height="20" rx="2" fill="#161d27" stroke="#22c55e" stroke-width="1.5"/>
+            <text x="135" y="302" text-anchor="middle" fill="#22c55e" font-size="10" font-family="monospace">KA</text>
+            <text x="135" y="320" text-anchor="middle" fill="#64748b" font-size="9" font-family="monospace">常开</text>
+            <path d="M150 298 L175 298" stroke="#94a3b8" stroke-width="2"/>
+            <rect x="175" y="288" width="30" height="20" rx="2" fill="#161d27" stroke="#f59e0b" stroke-width="1.5"/>
+            <text x="190" y="302" text-anchor="middle" fill="#f59e0b" font-size="10" font-family="monospace">YV</text>
+            <text x="190" y="320" text-anchor="middle" fill="#64748b" font-size="9" font-family="monospace">线圈</text>
+            <text x="230" y="302" fill="#64748b" font-size="10" font-family="monospace">← 24V+  ·  0V →</text>
+          </g>
+
+          <!-- 状态文字 -->
+          <text id="stateText" x="500" y="305" text-anchor="middle" fill="#94a3b8" font-size="13" font-family="monospace">当前状态：气缸缩回（YV失电）</text>
+        </svg>
+      </div>
+      <div class="pneu-controls">
+        <button class="btn primary" id="btnExtend" onclick="animateCylinder('extend')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          气缸伸出（YV得电）
+        </button>
+        <button class="btn" id="btnRetract" onclick="animateCylinder('retract')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+          气缸缩回（YV失电）
+        </button>
+        <button class="btn" onclick="animateCylinder('auto')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 12a9 9 0 11-9-9c2.5 0 4.8 1 6.5 2.6L21 8"/><path d="M21 3v5h-5"/></svg>
+          自动循环演示
+        </button>
+      </div>
+      <div style="margin-top:20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px">
+        <div class="card">
+          <div class="card-title"><span class="badge" style="background:rgba(239,68,68,.15);color:var(--red)">伸出</span>YV 得电</div>
+          <p style="font-size:13px;color:var(--text-dim);line-height:1.8">
+            1口(P) → 4口(A) 通气，压缩空气进入气缸<b style="color:var(--text)">无杆腔（左）</b><br>
+            2口(B) → 5口(S) 排气，有杆腔经消声器排气<br>
+            结果：<b style="color:var(--accent)">气缸伸出</b>，到右端触发 SQ1
+          </p>
+        </div>
+        <div class="card">
+          <div class="card-title"><span class="badge" style="background:rgba(59,130,246,.15);color:var(--blue)">缩回</span>YV 失电</div>
+          <p style="font-size:13px;color:var(--text-dim);line-height:1.8">
+            弹簧复位，1口(P) → 2口(B) 通气，压缩空气进入<b style="color:var(--text)">有杆腔（右）</b><br>
+            4口(A) → 3口(R) 排气，无杆腔经消声器排气<br>
+            结果：<b style="color:var(--accent)">气缸缩回</b>，到左端触发 SQ2
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 系统联动动画 ===== -->
+<section id="syanim">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="sec-num">03.5 / FULL SYSTEM ANIMATION</div>
+      <h2 class="sec-title">系统联动动画（完整接线+电压+灯效）</h2>
+      <p class="sec-desc">从按下按钮到气缸动作、指示灯亮灭的完整链路动画。红色线=24V正极，蓝色线=GND负极，橙色高亮=当前有信号通过。每个节点标注电压值。</p>
+    </div>
+    <div class="sys-anim">
+      <div class="sys-svg-wrap">
+        <svg viewBox="0 0 920 520" width="920" height="520" xmlns="http://www.w3.org/2000/svg" id="sysSvg">
+          <!-- 24V电源母线 -->
+          <line x1="20" y1="20" x2="900" y2="20" stroke="#475569" stroke-width="2" id="vBus24"/>
+          <text x="25" y="14" fill="#ef4444" font-size="11" font-family="monospace" font-weight="bold">+24V DC</text>
+          <text x="830" y="14" fill="#ef4444" font-size="11" font-family="monospace">电源正极</text>
+          <!-- GND母线 -->
+          <line x1="20" y1="490" x2="900" y2="490" stroke="#475569" stroke-width="2" id="vBusGnd"/>
+          <text x="25" y="506" fill="#3b82f6" font-size="11" font-family="monospace" font-weight="bold">GND (0V)</text>
+          <text x="830" y="506" fill="#3b82f6" font-size="11" font-family="monospace">电源负极</text>
+
+          <!-- 左侧输入元件 -->
+          <g id="inputGroup">
+            <text x="80" y="50" text-anchor="middle" fill="#64748b" font-size="11" font-family="monospace" font-weight="bold">输入元件</text>
+            <g id="sb1"><circle cx="80" cy="80" r="16" fill="#161d27" stroke="#22c55e" stroke-width="2"/><circle cx="80" cy="80" r="8" fill="#22c55e" opacity="0.3" class="btn-cap"/><text x="80" y="84" text-anchor="middle" fill="#22c55e" font-size="9" font-family="monospace" font-weight="bold">SB1</text><text x="80" y="108" text-anchor="middle" fill="#64748b" font-size="10" font-family="monospace">启动</text><line x1="80" y1="64" x2="80" y2="20" stroke="#475569" stroke-width="1.5" class="wire wire-24"/><line x1="80" y1="96" x2="80" y2="130" stroke="#475569" stroke-width="1.5" class="wire wire-sig"/><text x="90" y="72" fill="#94a3b8" font-size="9" font-family="monospace">24V</text></g>
+            <g id="sb2"><circle cx="80" cy="145" r="16" fill="#161d27" stroke="#ef4444" stroke-width="2"/><circle cx="80" cy="145" r="8" fill="#ef4444" opacity="0.3" class="btn-cap"/><text x="80" y="149" text-anchor="middle" fill="#ef4444" font-size="9" font-family="monospace" font-weight="bold">SB2</text><text x="80" y="173" text-anchor="middle" fill="#64748b" font-size="10" font-family="monospace">停止</text><line x1="80" y1="129" x2="80" y2="20" stroke="#475569" stroke-width="1.5" class="wire wire-24"/><line x1="80" y1="161" x2="80" y2="195" stroke="#475569" stroke-width="1.5" class="wire wire-sig"/><text x="90" y="137" fill="#94a3b8" font-size="9" font-family="monospace">24V</text></g>
+            <g id="es1"><circle cx="80" cy="220" r="18" fill="#161d27" stroke="#ef4444" stroke-width="2.5"/><circle cx="80" cy="220" r="11" fill="#ef4444" opacity="0.4" class="btn-cap"/><text x="80" y="224" text-anchor="middle" fill="#fff" font-size="8" font-family="monospace" font-weight="bold">ES-1</text><text x="80" y="250" text-anchor="middle" fill="#ef4444" font-size="10" font-family="monospace">急停(常闭)</text><line x1="80" y1="202" x2="80" y2="20" stroke="#475569" stroke-width="1.5" class="wire wire-24"/><line x1="80" y1="238" x2="80" y2="270" stroke="#475569" stroke-width="1.5" class="wire wire-sig"/><text x="92" y="212" fill="#94a3b8" font-size="9" font-family="monospace">24V</text></g>
+            <g id="sq1in"><rect x="62" y="290" width="36" height="22" rx="3" fill="#161d27" stroke="#3b82f6" stroke-width="1.5"/><circle cx="80" cy="301" r="4" fill="#3b82f6" id="sq1InLed"/><text x="80" y="326" text-anchor="middle" fill="#64748b" font-size="10" font-family="monospace">SQ1 伸出</text><line x1="80" y1="290" x2="80" y2="20" stroke="#475569" stroke-width="1.5" class="wire wire-24"/><line x1="80" y1="312" x2="80" y2="340" stroke="#475569" stroke-width="1.5" class="wire wire-sig"/></g>
+            <g id="sq2in"><rect x="62" y="365" width="36" height="22" rx="3" fill="#161d27" stroke="#3b82f6" stroke-width="1.5"/><circle cx="80" cy="376" r="4" fill="#3b82f6" id="sq2InLed"/><text x="80" y="401" text-anchor="middle" fill="#64748b" font-size="10" font-family="monospace">SQ2 缩回</text><line x1="80" y1="365" x2="80" y2="20" stroke="#475569" stroke-width="1.5" class="wire wire-24"/><line x1="80" y1="387" x2="80" y2="415" stroke="#475569" stroke-width="1.5" class="wire wire-sig"/></g>
+          </g>
+
+          <!-- 中间PLC -->
+          <g id="plcGroup">
+            <rect x="200" y="55" width="180" height="400" rx="6" fill="#1a2332" stroke="#475569" stroke-width="2"/>
+            <rect x="200" y="55" width="180" height="30" rx="6" fill="#253040"/>
+            <text x="290" y="75" text-anchor="middle" fill="#f59e0b" font-size="13" font-family="monospace" font-weight="bold">X3U-18MT PLC</text>
+            <text x="215" y="100" fill="#3b82f6" font-size="10" font-family="monospace" font-weight="bold">输入 X</text>
+            <g id="plcInputs">
+              <g><rect x="210" y="108" width="28" height="18" rx="2" fill="#161d27" stroke="#334155"/><text x="224" y="121" text-anchor="middle" fill="#3b82f6" font-size="10" font-family="monospace" font-weight="bold">X0</text><circle cx="248" cy="117" r="3" fill="#334155" id="ledX0"/></g>
+              <g><rect x="210" y="130" width="28" height="18" rx="2" fill="#161d27" stroke="#334155"/><text x="224" y="143" text-anchor="middle" fill="#3b82f6" font-size="10" font-family="monospace" font-weight="bold">X1</text><circle cx="248" cy="139" r="3" fill="#334155" id="ledX1"/></g>
+              <g><rect x="210" y="152" width="28" height="18" rx="2" fill="#161d27" stroke="#334155"/><text x="224" y="165" text-anchor="middle" fill="#3b82f6" font-size="10" font-family="monospace" font-weight="bold">X3</text><circle cx="248" cy="161" r="3" fill="#334155" id="ledX3"/></g>
+              <g><rect x="210" y="174" width="28" height="18" rx="2" fill="#161d27" stroke="#334155"/><text x="224" y="187" text-anchor="middle" fill="#3b82f6" font-size="10" font-family="monospace" font-weight="bold">X4</text><circle cx="248" cy="183" r="3" fill="#334155" id="ledX4"/></g>
+              <g><rect x="210" y="196" width="28" height="18" rx="2" fill="#161d27" stroke="#334155"/><text x="224" y="209" text-anchor="middle" fill="#3b82f6" font-size="10" font-family="monospace" font-weight="bold">X5</text><circle cx="248" cy="205" r="3" fill="#334155" id="ledX5"/></g>
+            </g>
+            <rect x="210" y="224" width="28" height="18" rx="2" fill="#0f1419" stroke="#3b82f6" stroke-width="1.5"/><text x="224" y="237" text-anchor="middle" fill="#3b82f6" font-size="9" font-family="monospace" font-weight="bold">GND</text>
+            <line x1="224" y1="242" x2="224" y2="490" stroke="#3b82f6" stroke-width="1.5" opacity="0.5"/>
+            <line x1="205" y1="260" x2="375" y2="260" stroke="#334155" stroke-width="1" stroke-dasharray="4,3"/>
+            <text x="215" y="280" fill="#22c55e" font-size="10" font-family="monospace" font-weight="bold">输出 Y</text>
+            <g id="plcOutputs">
+              <g><rect x="210" y="288" width="28" height="18" rx="2" fill="#161d27" stroke="#334155"/><text x="224" y="301" text-anchor="middle" fill="#22c55e" font-size="10" font-family="monospace" font-weight="bold">Y0</text><circle cx="248" cy="297" r="3" fill="#334155" id="ledY0"/></g>
+              <g><rect x="210" y="310" width="28" height="18" rx="2" fill="#161d27" stroke="#334155"/><text x="224" y="323" text-anchor="middle" fill="#eab308" font-size="10" font-family="monospace" font-weight="bold">Y1</text><circle cx="248" cy="319" r="3" fill="#334155" id="ledY1"/></g>
+              <g><rect x="210" y="332" width="28" height="18" rx="2" fill="#161d27" stroke="#334155"/><text x="224" y="345" text-anchor="middle" fill="#22c55e" font-size="10" font-family="monospace" font-weight="bold">Y2</text><circle cx="248" cy="341" r="3" fill="#334155" id="ledY2"/></g>
+              <g><rect x="210" y="354" width="28" height="18" rx="2" fill="#161d27" stroke="#334155"/><text x="224" y="367" text-anchor="middle" fill="#ef4444" font-size="10" font-family="monospace" font-weight="bold">Y3</text><circle cx="248" cy="363" r="3" fill="#334155" id="ledY3"/></g>
+            </g>
+            <rect x="210" y="382" width="28" height="18" rx="2" fill="#0f1419" stroke="#ef4444" stroke-width="1.5"/><text x="224" y="395" text-anchor="middle" fill="#ef4444" font-size="8" font-family="monospace" font-weight="bold">+24V</text>
+            <line x1="224" y1="382" x2="224" y2="20" stroke="#ef4444" stroke-width="1.5" opacity="0.4"/>
+            <circle cx="350" cy="420" r="5" fill="#22c55e" id="plcRunLed"/>
+            <text x="360" y="424" fill="#64748b" font-size="10" font-family="monospace">RUN</text>
+          </g>
+
+          <!-- 输入信号线 -->
+          <path d="M80 130 L80 117 L210 117" stroke="#475569" stroke-width="1.5" fill="none" id="sigX0"/>
+          <path d="M80 195 L80 139 L210 139" stroke="#475569" stroke-width="1.5" fill="none" id="sigX1"/>
+          <path d="M80 340 L80 161 L210 161" stroke="#475569" stroke-width="1.5" fill="none" id="sigX3"/>
+          <path d="M80 415 L80 183 L210 183" stroke="#475569" stroke-width="1.5" fill="none" id="sigX4"/>
+          <path d="M80 270 L80 205 L210 205" stroke="#475569" stroke-width="1.5" fill="none" id="sigX5"/>
+
+          <!-- 右上三色灯 -->
+          <g id="lampGroup">
+            <text x="640" y="50" text-anchor="middle" fill="#64748b" font-size="11" font-family="monospace" font-weight="bold">状态指示灯</text>
+            <g id="lampY"><circle cx="580" cy="85" r="18" fill="#161d27" stroke="#eab308" stroke-width="2"/><circle cx="580" cy="85" r="12" fill="#eab308" opacity="0.15" id="glowY"/><text x="580" y="89" text-anchor="middle" fill="#eab308" font-size="9" font-family="monospace" font-weight="bold">A黄</text><text x="580" y="115" text-anchor="middle" fill="#64748b" font-size="10" font-family="monospace">待机</text></g>
+            <g id="lampG"><circle cx="640" cy="85" r="18" fill="#161d27" stroke="#22c55e" stroke-width="2"/><circle cx="640" cy="85" r="12" fill="#22c55e" opacity="0.15" id="glowG"/><text x="640" y="89" text-anchor="middle" fill="#22c55e" font-size="9" font-family="monospace" font-weight="bold">B绿</text><text x="640" y="115" text-anchor="middle" fill="#64748b" font-size="10" font-family="monospace">运行</text></g>
+            <g id="lampR"><circle cx="700" cy="85" r="18" fill="#161d27" stroke="#ef4444" stroke-width="2"/><circle cx="700" cy="85" r="12" fill="#ef4444" opacity="0.15" id="glowR"/><text x="700" y="89" text-anchor="middle" fill="#ef4444" font-size="9" font-family="monospace" font-weight="bold">C红</text><text x="700" y="115" text-anchor="middle" fill="#64748b" font-size="10" font-family="monospace">停止</text></g>
+            <line x1="580" y1="103" x2="580" y2="490" stroke="#3b82f6" stroke-width="1.5" opacity="0.4"/>
+            <line x1="640" y1="103" x2="640" y2="490" stroke="#3b82f6" stroke-width="1.5" opacity="0.4"/>
+            <line x1="700" y1="103" x2="700" y2="490" stroke="#3b82f6" stroke-width="1.5" opacity="0.4"/>
+            <path d="M238 319 L260 319 L260 130 L580 130 L580 103" stroke="#475569" stroke-width="1.5" fill="none" id="outY1"/>
+            <path d="M238 341 L270 341 L270 130 L640 130 L640 103" stroke="#475569" stroke-width="1.5" fill="none" id="outY2"/>
+            <path d="M238 363 L280 363 L280 130 L700 130 L700 103" stroke="#475569" stroke-width="1.5" fill="none" id="outY3"/>
+          </g>
+
+          <!-- 右中继电器+电磁阀 -->
+          <g id="relayGroup">
+            <text x="640" y="160" text-anchor="middle" fill="#64748b" font-size="11" font-family="monospace" font-weight="bold">继电器 & 电磁阀</text>
+            <rect x="560" y="175" width="50" height="35" rx="4" fill="#161d27" stroke="#22c55e" stroke-width="2" id="kaCoil"/>
+            <text x="585" y="197" text-anchor="middle" fill="#22c55e" font-size="12" font-family="monospace" font-weight="bold">KA</text>
+            <text x="585" y="222" text-anchor="middle" fill="#64748b" font-size="9" font-family="monospace">中间继电器</text>
+            <path d="M238 297 L300 297 L300 192 L560 192" stroke="#475569" stroke-width="1.5" fill="none" id="outY0"/>
+            <line x1="610" y1="192" x2="610" y2="490" stroke="#3b82f6" stroke-width="1.5" opacity="0.4"/>
+            <g id="kaContact">
+              <line x1="660" y1="180" x2="660" y2="200" stroke="#94a3b8" stroke-width="2" id="kaLine1"/>
+              <line x1="660" y1="200" x2="685" y2="185" stroke="#94a3b8" stroke-width="2" id="kaArm"/>
+              <line x1="660" y1="210" x2="660" y2="230" stroke="#94a3b8" stroke-width="2" id="kaLine2"/>
+              <text x="695" y="200" fill="#64748b" font-size="9" font-family="monospace">KA常开</text>
+            </g>
+            <line x1="660" y1="180" x2="660" y2="20" stroke="#ef4444" stroke-width="1.5" opacity="0.4"/>
+            <rect x="720" y="175" width="50" height="35" rx="4" fill="#161d27" stroke="#f59e0b" stroke-width="2" id="yvCoil"/>
+            <text x="745" y="197" text-anchor="middle" fill="#f59e0b" font-size="12" font-family="monospace" font-weight="bold">YV</text>
+            <text x="745" y="222" text-anchor="middle" fill="#64748b" font-size="9" font-family="monospace">电磁阀线圈</text>
+            <path d="M660 230 L660 240 L720 240 L720 210" stroke="#475569" stroke-width="1.5" fill="none" id="wireToYV"/>
+            <line x1="770" y1="192" x2="770" y2="490" stroke="#3b82f6" stroke-width="1.5" opacity="0.4"/>
+          </g>
+
+          <!-- 右下气缸 -->
+          <g id="cylGroup">
+            <text x="680" y="270" text-anchor="middle" fill="#64748b" font-size="11" font-family="monospace" font-weight="bold">双作用气缸</text>
+            <rect x="540" y="290" width="280" height="70" rx="5" fill="#1c2530" stroke="#475569" stroke-width="2"/>
+            <rect x="535" y="285" width="10" height="80" rx="2" fill="#334155" stroke="#475569" stroke-width="1"/>
+            <rect x="815" y="285" width="10" height="80" rx="2" fill="#334155" stroke="#475569" stroke-width="1"/>
+            <g id="sysPiston" style="transition:transform 1.2s ease-in-out">
+              <rect x="580" y="296" width="14" height="58" rx="2" fill="#f59e0b" stroke="#d97706" stroke-width="1"/>
+              <rect x="594" y="318" width="190" height="14" rx="2" fill="#94a3b8" stroke="#64748b" stroke-width="1"/>
+            </g>
+            <circle cx="560" cy="290" r="4" fill="#475569"/>
+            <circle cx="790" cy="290" r="4" fill="#475569"/>
+            <text x="560" y="280" text-anchor="middle" fill="#64748b" font-size="9" font-family="monospace">无杆腔</text>
+            <text x="790" y="280" text-anchor="middle" fill="#64748b" font-size="9" font-family="monospace">有杆腔</text>
+            <rect x="550" y="365" width="24" height="14" rx="2" fill="#161d27" stroke="#3b82f6" stroke-width="1.5"/>
+            <circle cx="562" cy="372" r="3" fill="#3b82f6" id="sysSq2Led"/>
+            <text x="562" y="392" text-anchor="middle" fill="#3b82f6" font-size="9" font-family="monospace">SQ2</text>
+            <rect x="780" y="365" width="24" height="14" rx="2" fill="#161d27" stroke="#3b82f6" stroke-width="1.5"/>
+            <circle cx="792" cy="372" r="3" fill="#3b82f6" id="sysSq1Led"/>
+            <text x="792" y="392" text-anchor="middle" fill="#3b82f6" font-size="9" font-family="monospace">SQ1</text>
+            <path d="M560 290 L560 260 L745 260 L745 210" stroke="#475569" stroke-width="1.5" fill="none" id="airPipe4"/>
+            <path d="M790 290 L790 250 L760 250 L760 210" stroke="#475569" stroke-width="1.5" fill="none" id="airPipe2"/>
+          </g>
+
+          <!-- 电压标注 -->
+          <rect x="420" y="100" width="62" height="18" rx="3" fill="rgba(239,68,68,.1)" stroke="rgba(239,68,68,.3)"/>
+          <text x="451" y="113" text-anchor="middle" fill="#ef4444" font-size="10" font-family="monospace">COM:+24V</text>
+          <rect x="420" y="230" width="62" height="18" rx="3" fill="rgba(59,130,246,.1)" stroke="rgba(59,130,246,.3)"/>
+          <text x="451" y="243" text-anchor="middle" fill="#3b82f6" font-size="10" font-family="monospace">COM:GND</text>
+          <text x="300" y="455" text-anchor="middle" fill="#64748b" font-size="10" font-family="monospace">输入: 开关接通时X点=+24V  |  输出: Y接通时输出+24V到负载正极，负载负极接GND</text>
+        </svg>
+      </div>
+      <div class="sys-controls">
+        <button class="btn primary" onclick="sysAction('start')" id="sysBtnStart"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polygon points="5,3 19,12 5,21"/></svg>按 SB1 启动</button>
+        <button class="btn" onclick="sysAction('stop')" id="sysBtnStop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><rect x="6" y="6" width="12" height="12" rx="1"/></svg>按 SB2 停止</button>
+        <button class="btn" onclick="sysAction('estop')" id="sysBtnEstop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/></svg>拍急停 ES-1</button>
+        <button class="btn" onclick="sysAction('reset')" id="sysBtnReset"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M3 12a9 9 0 1 0 9-9"/><polyline points="3 4 3 10 9 10"/></svg>复位</button>
+        <button class="btn" onclick="sysAction('auto')" id="sysBtnAuto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 12a9 9 0 11-9-9c2.5 0 4.8 1 6.5 2.6L21 8"/><path d="M21 3v5h-5"/></svg>自动循环</button>
+      </div>
+      <div class="sys-status" id="sysStatus">
+        <span class="st-dot" id="sysDot"></span>
+        <span class="st-label">当前状态：</span>
+        <span class="st-val" id="sysStateText">待机中 — 黄灯A亮，气缸缩回，SQ2到位</span>
+        <span style="margin-left:auto;color:var(--text-mute);font-size:11px">灯逻辑：待机=黄A(Y1) · 运行=绿B(Y2) · 停止=红C(Y3)</span>
+      </div>
+      <div class="sys-legend">
+        <span><span class="wire-sample" style="background:#ef4444"></span>+24V 正极</span>
+        <span><span class="wire-sample" style="background:#3b82f6"></span>GND 负极 (0V)</span>
+        <span><span class="wire-sample" style="background:#f59e0b"></span>信号通路（有电流）</span>
+        <span><span class="wire-sample" style="background:#475569"></span>无信号（断开）</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 面板布局规范 ===== -->
+<section id="layout">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="sec-num">04 / PANEL LAYOUT</div>
+      <h2 class="sec-title">面板布局与指示灯排列</h2>
+      <p class="sec-desc">依据 GB/T 4025（IEC 60073）国家标准，按钮和指示灯的颜色、排列顺序都有明确规范。</p>
+    </div>
+
+    <div class="layout-grid">
+      <!-- 指示灯排列 -->
+      <div class="layout-demo">
+        <h4>面板指示灯排列 <span class="tag">横装 · 从左到右</span></h4>
+        <div class="panel-mockup">
+          <div class="panel-row">
+            <div class="mock-lamp green" data-label="B 绿·运行"></div>
+            <div class="mock-lamp yellow" data-label="A 黄·待机"></div>
+            <div class="mock-lamp red" data-label="C 红·故障"></div>
+          </div>
+        </div>
+        <div class="dim-note">
+          推荐顺序：<b>绿 → 黄 → 红</b><br>
+          逻辑：正常运行 → 警告待机 → 故障停止<br>
+          与接线图 Y2(绿B) → Y1(黄A) → Y3(红C) 对应
+        </div>
+      </div>
+
+      <!-- 按钮排列 -->
+      <div class="layout-demo">
+        <h4>按钮排列 <span class="tag">横装 · 从左到右</span></h4>
+        <div class="panel-mockup">
+          <div class="panel-row">
+            <div class="mock-btn estop"></div>
+            <div class="mock-divider"></div>
+            <div class="mock-btn start">SB1</div>
+            <div class="mock-btn stop">SB2</div>
+            <div class="mock-btn manual">SB3</div>
+          </div>
+        </div>
+        <div class="dim-note">
+          急停单独最左，与其他元件间距 ≥ <b>30mm</b><br>
+          按钮顺序：<b>启动(绿) → 停止(红) → 手动/复位(蓝)</b><br>
+          急停用红色蘑菇头，必须突出面板
+        </div>
+      </div>
+
+      <!-- 三色灯塔 -->
+      <div class="layout-demo">
+        <h4>立式三色灯塔 <span class="tag">竖装 · 从上到下</span></h4>
+        <div class="panel-mockup" style="display:flex;justify-content:center;align-items:flex-end;min-height:160px">
+          <div class="tower-demo">
+            <div class="tower-stack">
+              <div class="tower-layer red"></div>
+              <div class="tower-layer yellow"></div>
+              <div class="tower-layer green"></div>
             </div>
+            <div class="tower-base"></div>
+          </div>
         </div>
+        <div class="dim-note">
+          固定顺序：<b>红(顶) → 黄(中) → 绿(底)</b><br>
+          红色最危险，必须放最高最醒目处<br>
+          与面板灯颜色含义一一对应，排列方向不同属正常
+        </div>
+      </div>
+
+      <!-- 完整面板 -->
+      <div class="layout-demo">
+        <h4>完整面板推荐布局 <span class="tag">两排式</span></h4>
+        <div class="panel-mockup">
+          <div class="panel-row" style="margin-bottom:24px">
+            <div class="mock-lamp green" data-label="运行"></div>
+            <div class="mock-lamp yellow" data-label="待机"></div>
+            <div class="mock-lamp red" data-label="故障"></div>
+          </div>
+          <div class="panel-row">
+            <div class="mock-btn estop"></div>
+            <div class="mock-divider"></div>
+            <div class="mock-btn start">SB1</div>
+            <div class="mock-btn stop">SB2</div>
+            <div class="mock-btn manual">SB3</div>
+          </div>
+        </div>
+        <div class="dim-note">
+          上排指示灯，下排按钮，灯区与按钮区分开<br>
+          整排居中对称分布，距边缘 ≥ <b>20mm</b><br>
+          同排元件中心高度对齐，间距 <b>25~30mm</b>
+        </div>
+      </div>
     </div>
 
-    <!-- 核心保障 -->
-    <div class="grid grid-cols-2 gap-3 mb-5 px-4 sm:px-0 relative z-10">
-        <div class="glass-panel p-3 rounded-xl text-[11px] text-sky-200 flex items-center justify-center gap-1 font-bold"><span class="text-sky-400">⚡</span> 付款自动发卡</div>
-        <div class="glass-panel p-3 rounded-xl text-[11px] text-sky-200 flex items-center justify-center gap-1 font-bold"><span class="text-sky-400">🛡️</span> 稳定运行</div>
-        <div class="glass-panel p-3 rounded-xl text-[11px] text-sky-200 flex items-center justify-center gap-1 font-bold"><span class="text-emerald-400">💎</span> 封号包退</div>
-        <div class="glass-panel p-3 rounded-xl text-[11px] text-sky-200 flex items-center justify-center gap-1 font-bold"><span class="text-sky-400">🎧</span> 24小时客服</div>
+    <!-- 尺寸规范表 -->
+    <h3 style="font-size:18px;font-weight:700;margin:36px 0 16px">布局尺寸规范</h3>
+    <div class="card" style="padding:0;overflow:hidden">
+      <table class="dim-table">
+        <thead>
+          <tr><th style="width:25%">项目</th><th style="width:20%">规范值</th><th style="width:55%">说明</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>元件距面板边缘</td><td><b>15~20mm</b></td><td>不能太靠边，否则螺母拧不上，开孔器也放不下</td></tr>
+          <tr><td>元件之间中心距</td><td><b>25~30mm</b></td><td>保证手指能按到、线能走、不互相干涉</td></tr>
+          <tr><td>急停与其他元件间距</td><td><b>≥30mm</b></td><td>急停周围要宽松，方便紧急情况下一巴掌拍下去</td></tr>
+          <tr><td>同一排元件中心高度</td><td><b>必须对齐</b></td><td>用尺子比着画线再开孔，不能高低错落</td></tr>
+          <tr><td>标准开孔直径</td><td><b>φ22mm</b></td><td>按钮和指示灯通用安装尺寸</td></tr>
+          <tr><td>走线槽距元件</td><td><b>10~15mm</b></td><td>留出线弯进槽的空间</td></tr>
+          <tr><td>最左/最右元件中心距边</td><td><b>25~30mm</b></td><td>整排居中对称，不要偏一头</td></tr>
+        </tbody>
+      </table>
     </div>
 
-    <!-- 购买提示语 -->
-    <div class="mb-5 px-4 sm:px-0 relative z-10">
-        <div class="glass-panel p-3.5 rounded-xl border border-sky-500/20 bg-slate-800/40 shadow-inner">
-            <div class="flex flex-col gap-1.5 text-xs sm:text-sm text-slate-300">
-                <p class="flex items-center gap-2">
-                    <span class="text-base drop-shadow-md">🎁</span> 
-                    <span class="tracking-wide">下单后自动提供 <span class="text-sky-400 font-bold drop-shadow-[0_0_8px_rgba(56,189,248,0.5)]">下载链接</span> 与 <span class="text-sky-400 font-bold drop-shadow-[0_0_8px_rgba(56,189,248,0.5)]">使用教程</span></span>
-                </p>
-                <div class="h-[1px] w-full bg-gradient-to-r from-transparent via-slate-700/50 to-transparent my-0.5"></div>
-                <p class="flex items-center gap-2">
-                    <span class="text-base drop-shadow-md">💬</span> 
-                    <span class="tracking-wide">使用过程中有任何问题，可随时联系客服，<span class="text-emerald-400 font-bold drop-shadow-[0_0_8px_rgba(16,185,129,0.5)] border-b border-emerald-500/30">包教会</span></span>
-                </p>
-            </div>
-        </div>
+    <!-- 灯塔对应表 -->
+    <h3 style="font-size:18px;font-weight:700;margin:36px 0 16px">面板灯与三色灯塔对应关系</h3>
+    <div class="card" style="padding:0;overflow:hidden">
+      <table class="dim-table">
+        <thead>
+          <tr><th style="width:15%">PLC输出</th><th style="width:20%">面板指示灯</th><th style="width:20%">灯塔层</th><th style="width:20%">位置</th><th style="width:25%">含义</th></tr>
+        </thead>
+        <tbody>
+          <tr><td style="font-family:var(--mono);color:var(--green)">Y2</td><td>B灯（绿）</td><td>绿灯</td><td>灯塔底层</td><td>运行 / 正常</td></tr>
+          <tr><td style="font-family:var(--mono);color:var(--yellow)">Y1</td><td>A灯（黄）</td><td>黄灯</td><td>灯塔中间层</td><td>待机 / 警告</td></tr>
+          <tr><td style="font-family:var(--mono);color:var(--red)">Y3</td><td>C灯（红）</td><td>红灯</td><td>灯塔顶层</td><td>故障 / 停止</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+<!-- ===== 工作流程 ===== -->
+<section id="workflow">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="sec-num">05 / WORKFLOW</div>
+      <h2 class="sec-title">完整工作流程</h2>
+      <p class="sec-desc">从上电到自动循环，每个阶段的输入输出状态和气缸动作。</p>
+    </div>
+    <div class="workflow">
+      <div class="wf-step">
+        <div class="wf-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
+        <h5>上电待机</h5>
+        <p>接通24V电源，PLC上电自检。A黄灯亮，气缸默认在缩回位（SQ2被压合），系统等待启动指令。</p>
+      </div>
+      <div class="wf-step">
+        <div class="wf-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5,3 19,12 5,21"/></svg></div>
+        <h5>按下启动 SB1</h5>
+        <p>X0得电，PLC进入运行状态。B绿灯亮、A黄灯灭，Y0输出→KA吸合→YV得电→气缸开始伸出。</p>
+      </div>
+      <div class="wf-step">
+        <div class="wf-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+        <h5>气缸伸出</h5>
+        <p>YV得电，无杆腔进气、有杆腔排气，活塞向右运动。到达右极限时磁性开关SQ1触发（X3得电）。</p>
+      </div>
+      <div class="wf-step">
+        <div class="wf-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+        <h5>到位延时 / 保持</h5>
+        <p>SQ1触发后，根据工艺要求可能延时一段时间（如1秒），或立即执行下一步。期间气缸保持伸出状态。</p>
+      </div>
+      <div class="wf-step">
+        <div class="wf-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg></div>
+        <h5>气缸缩回</h5>
+        <p>Y0断开→KA释放→YV失电→弹簧复位。有杆腔进气、无杆腔排气，活塞向左运动。到达左极限时SQ2触发（X4得电）。</p>
+      </div>
+      <div class="wf-step">
+        <div class="wf-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 11-9-9c2.5 0 4.8 1 6.5 2.6L21 8"/><path d="M21 3v5h-5"/></svg></div>
+        <h5>循环 / 停止</h5>
+        <p>SQ2触发后，若为自动模式则返回第3步继续循环；若按下SB2停止，则完成当前循环后停机，A黄灯亮。</p>
+      </div>
     </div>
 
-    <!-- 分类Tab -->
-    <div class="flex gap-2 mb-5 px-4 sm:px-0 relative z-10">
-        <button class="tab-btn flex-1 bg-slate-800/80 py-3 rounded-xl text-sm font-bold active shadow-lg border border-slate-700/50" onclick="showTab('ios', this)">IOS和平精英</button>
-        <button class="tab-btn flex-1 bg-slate-800/80 py-3 rounded-xl text-sm font-bold shadow-lg border border-slate-700/50" onclick="showTab('ios-all', this)">iOS全系统</button>
-        <button class="tab-btn flex-1 bg-slate-800/80 py-3 rounded-xl text-sm font-bold shadow-lg border border-slate-700/50" onclick="showTab('android', this)">安卓和平</button>
+    <div style="margin-top:24px" class="card">
+      <div class="card-title"><span class="badge" style="background:rgba(239,68,68,.15);color:var(--red)">急停</span>ES-1 紧急停止处理</div>
+      <p style="font-size:13px;color:var(--text-dim)">拍下急停后，X5失电（常闭触点断开），PLC应立即执行中断：切断所有输出（Y0~Y3全部OFF），C红灯亮，气缸保持当前位置。急停复位后需按SB2复位才能重新启动。急停必须用常闭触点，这是安全规范——线路断线时等效于急停触发。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 注意事项 ===== -->
+<section id="notes">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="sec-num">06 / NOTES</div>
+      <h2 class="sec-title">接线注意事项</h2>
+      <p class="sec-desc">技能节比赛评分的细节点，也是实际安全操作的关键。</p>
+    </div>
+    <div class="warn-list">
+      <div class="warn-item danger">
+        <div class="wi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+        <div class="wi-text"><b>24V正负极不要接反。</b>GND是负极（0V），DC24V是正极。接反可能烧坏PLC输入点或指示灯。接线前用万用表确认电压。</div>
+      </div>
+      <div class="warn-item danger">
+        <div class="wi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
+        <div class="wi-text"><b>KA继电器线圈必须并联续流二极管。</b>继电器线圈断开瞬间会产生反向电动势，可能击穿PLC晶体管输出点。二极管阴极接24V+，阳极接Y0侧（反向并联）。</div>
+      </div>
+      <div class="warn-item">
+        <div class="wi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+        <div class="wi-text"><b>急停ES-1用常闭触点，不要接成常开。</b>常闭接法在断线时也能触发急停，是安全规范。接线后测试：拔下急停的一根线，PLC应报急停。</div>
+      </div>
+      <div class="warn-item">
+        <div class="wi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22,4 12,14.01 9,11.01"/></svg></div>
+        <div class="wi-text"><b>SQ1/SQ2磁性开关安装位置要准确。</b>装在气缸两端的感应环位置，活塞到位时开关上的指示灯必须亮。用绑带固定后再微调，确保到位可靠触发。</div>
+      </div>
+      <div class="warn-item">
+        <div class="wi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9c2.4 0 4.58.94 6.18 2.47"/></svg></div>
+        <div class="wi-text"><b>电磁阀3口和5口必须装消声器。</b>不装消声器噪音很大，且排气口容易进灰损坏阀件。消声器要拧紧但不要用力过度导致滑牙。</div>
+      </div>
+      <div class="warn-item">
+        <div class="wi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/></svg></div>
+        <div class="wi-text"><b>走线要横平竖直，进走线槽。</b>强弱电分开走，输入线和输出线尽量不要扎在一起。每个端子压接牢固，不留毛刺，线头不超过2mm。线号管方向一致、字迹朝外。</div>
+      </div>
+      <div class="warn-item">
+        <div class="wi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+        <div class="wi-text"><b>面板元件布局要居中对称。</b>开孔前用尺子和铅笔画线，确保同排元件中心高度一致、间距均匀。急停单独放最左，与其他元件保持30mm以上间距。</div>
+      </div>
+      <div class="warn-item">
+        <div class="wi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div>
+        <div class="wi-text"><b>电磁阀YV线圈电压确认是DC24V。</b>KA触点容量要满足YV线圈电流要求。接线后先不通气，单独测试电磁阀换向是否正常，再通气测试气缸。</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== PLC程序设计 ===== -->
+<section id="program">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="sec-num">07 / PLC PROGRAM</div>
+      <h2 class="sec-title">PLC 程序设计（梯形图 + 指令表）</h2>
+      <p class="sec-desc">根据灯逻辑（待机=黄A、运行=绿B、停止=红C）和气缸自动往返控制要求编写的完整梯形图程序，适用于信捷X3U系列PLC。</p>
     </div>
 
-    <!-- 商品列表 -->
-    <div id="product-list" class="mb-5 px-4 sm:px-0 relative z-10"></div>
-
-    <!-- 商品详情框 -->
-    <div id="selected-box" class="hidden mb-5 px-4 sm:px-0 relative z-10">
-        <div class="glass-panel p-4 rounded-xl border border-sky-500/30 relative overflow-hidden">
-            <div class="absolute top-0 right-0 w-20 h-20 bg-sky-500/10 blur-[20px] rounded-full"></div>
-            <p class="text-[10px] text-slate-400 mb-2 flex items-center gap-1">
-                <svg class="w-3 h-3 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                当前选中：
-            </p>
-            <h3 id="sel-name" class="font-bold text-sky-300 mb-3 text-lg neon-text"></h3>
-            <!-- 修改：去除了固定高度(h-48)，改为自适应高度(h-auto)，移除内部滚动条，让联系方式区域根据内容自动向下延展 -->
-            <div id="sel-desc" class="text-[12px] text-slate-300 h-auto bg-slate-900/60 p-3 rounded-lg border border-slate-700/50 whitespace-pre-wrap break-words leading-relaxed"></div>
-        </div>
+    <!-- IO分配表 -->
+    <div class="card" style="margin-bottom:24px">
+      <div class="card-title"><span class="badge">IO分配</span>程序使用的软元件一览</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;font-size:13px">
+        <div><b style="color:var(--blue)">X0</b> = SB1 启动按钮（常开）</div>
+        <div><b style="color:var(--blue)">X1</b> = SB2 停止按钮（常开）</div>
+        <div><b style="color:var(--blue)">X3</b> = SQ1 伸出到位（常开）</div>
+        <div><b style="color:var(--blue)">X4</b> = SQ2 缩回到位（常开）</div>
+        <div><b style="color:var(--blue)">X5</b> = ES-1 急停（常闭，正常时接通）</div>
+        <div><b style="color:var(--green)">Y0</b> = KA继电器→电磁阀YV</div>
+        <div><b style="color:var(--yellow)">Y1</b> = A灯 黄色（待机）</div>
+        <div><b style="color:var(--green)">Y2</b> = B灯 绿色（运行）</div>
+        <div><b style="color:var(--red)">Y3</b> = C灯 红色（停止）</div>
+        <div><b style="color:var(--accent)">M0</b> = 运行标志（辅助继电器）</div>
+        <div><b style="color:var(--accent)">T0</b> = 伸出到位延时（100ms×10=1s）</div>
+      </div>
     </div>
 
-    <!-- 支付区域 -->
-    <div class="glass-panel p-5 mx-4 sm:mx-0 rounded-xl relative z-10 border border-sky-500/20">
-        <input type="text" id="contact" placeholder="请输入QQ或联系方式..." class="w-full bg-slate-900/80 border border-slate-700 p-3.5 rounded-lg text-sky-100 mb-4 text-sm focus:outline-none focus:border-sky-400 shadow-inner transition-colors">
-        
-        <div class="flex gap-4 mb-5">
-            <label class="flex items-center gap-2 cursor-pointer bg-slate-800/80 hover:bg-slate-700 p-3 rounded-lg flex-1 border border-slate-600 transition">
-                <input type="radio" name="payMethod" value="wechat" checked class="accent-emerald-500 w-4 h-4">
-                <span class="text-sm font-bold text-emerald-400">微信支付</span>
-            </label>
-            <label class="flex items-center gap-2 cursor-pointer bg-slate-800/80 hover:bg-slate-700 p-3 rounded-lg flex-1 border border-slate-600 transition">
-                <input type="radio" name="payMethod" value="alipay" class="accent-sky-500 w-4 h-4">
-                <span class="text-sm font-bold text-sky-400">支付宝支付</span>
-            </label>
-        </div>
-
-        <div class="flex items-end justify-between mb-4 border-t border-slate-700/50 pt-4">
-            <p class="text-xs text-slate-400">成交只是服务的开始！</p>
-            <div class="text-right">
-                <p class="text-[10px] text-slate-400 mb-1">支付金额：</p>
-                <div id="price-display" class="text-sky-400 font-bold text-2xl neon-text">¥0.00</div>
-            </div>
-        </div>
-
-        <button id="payBtn" class="w-full bg-gradient-to-r from-sky-600 to-blue-600 py-4 rounded-xl font-bold text-white text-lg shadow-[0_0_20px_rgba(2,132,199,0.4)] transition hover:shadow-[0_0_30px_rgba(2,132,199,0.6)] hover:from-sky-500 hover:to-blue-500 active:scale-95" onclick="showPayModal()">立即下单 · 自动发卡</button>
+    <!-- 程序切换标签 -->
+    <div class="program-tabs">
+      <button class="program-tab active" onclick="switchTab('ladder')">梯形图</button>
+      <button class="program-tab" onclick="switchTab('code')">指令表（助记符）</button>
+      <button class="program-tab" onclick="switchTab('explain')">程序说明</button>
     </div>
-</div>
 
-<!-- 提示框 (取代alert) -->
-<div id="toastMessage" class="fixed top-10 left-1/2 -translate-x-1/2 bg-slate-800/95 border border-sky-500/50 text-sky-300 px-6 py-3 rounded-xl shadow-[0_0_20px_rgba(56,189,248,0.3)] z-[100] transition-all duration-300 opacity-0 pointer-events-none font-bold text-sm hidden"></div>
+    <!-- 梯形图 -->
+    <div class="program-pane active" id="pane-ladder">
+      <div class="ladder-section">
+        <div class="ladder-svg-wrap">
+          <svg viewBox="0 0 760 620" width="760" height="620" xmlns="http://www.w3.org/2000/svg" id="ladderSvg">
+            <style>
+              .ld-bus{stroke:#94a3b8;stroke-width:2}
+              .ld-wire{stroke:#94a3b8;stroke-width:1.5;fill:none}
+              .ld-no{stroke:#e2e8f0;stroke-width:2}
+              .ld-nc{stroke:#e2e8f0;stroke-width:2}
+              .ld-coil{stroke:#e2e8f0;stroke-width:2;fill:none}
+              .ld-timer{stroke:#f59e0b;stroke-width:1.5;fill:#161d27}
+              .ld-text{fill:#e2e8f0;font-size:11px;font-family:monospace;font-weight:bold;text-anchor:middle}
+              .ld-addr{fill:#64748b;font-size:9px;font-family:monospace;text-anchor:middle}
+              .ld-net{fill:#f59e0b;font-size:11px;font-family:monospace;font-weight:bold}
+            </style>
+            <!-- 左右母线 -->
+            <line x1="30" y1="10" x2="30" y2="610" class="ld-bus"/>
+            <line x1="730" y1="10" x2="730" y2="610" class="ld-bus"/>
 
-<!-- 联系客服弹窗 -->
-<div id="supportModal" class="modal">
-    <div class="glass-panel border border-sky-500/30 w-full max-w-sm p-8 rounded-2xl text-center relative overflow-hidden">
-        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-sky-500 to-transparent"></div>
-        <h2 class="text-white font-bold mb-4 text-lg">联系技术客服</h2>
-        <p class="text-slate-300 mb-6">客服QQ：<span class="text-sky-400 font-bold text-2xl tracking-wider block mt-2 neon-text">3997420238</span></p>
-        <a href="https://qm.qq.com/q/5Ycrlv5FJu" target="_blank" class="block w-full bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 py-3.5 rounded-xl text-white font-bold shadow-[0_0_15px_rgba(2,132,199,0.4)] transition mb-3">
-            一键添加平台客服
-        </a>
-        <button class="w-full bg-slate-700/80 hover:bg-slate-600 py-3 rounded-xl text-slate-300 transition font-bold border border-slate-600" onclick="closeModal('supportModal')">关闭</button>
+            <!-- Network 1: 启保停 M0 -->
+            <text x="40" y="28" class="ld-net">Network 1：运行自锁（启保停）</text>
+            <line x1="30" y1="50" x2="100" y2="50" class="ld-wire"/>
+            <!-- X0 常开 -->
+            <line x1="100" y1="40" x2="100" y2="60" class="ld-no"/>
+            <line x1="115" y1="40" x2="115" y2="60" class="ld-no"/>
+            <text x="107" y="35" class="ld-text">X0</text>
+            <text x="107" y="75" class="ld-addr">SB1启动</text>
+            <line x1="115" y1="50" x2="160" y2="50" class="ld-wire"/>
+            <!-- /X1 常闭 -->
+            <line x1="160" y1="40" x2="160" y2="60" class="ld-nc"/>
+            <line x1="175" y1="40" x2="175" y2="60" class="ld-nc"/>
+            <line x1="158" y1="38" x2="177" y2="62" class="ld-nc"/>
+            <text x="167" y="35" class="ld-text">X1</text>
+            <text x="167" y="75" class="ld-addr">SB2停止</text>
+            <line x1="175" y1="50" x2="220" y2="50" class="ld-wire"/>
+            <!-- /X5 常闭（急停）-->
+            <line x1="220" y1="40" x2="220" y2="60" class="ld-nc"/>
+            <line x1="235" y1="40" x2="235" y2="60" class="ld-nc"/>
+            <line x1="218" y1="38" x2="237" y2="62" class="ld-nc"/>
+            <text x="227" y="35" class="ld-text">X5</text>
+            <text x="227" y="75" class="ld-addr">急停常闭</text>
+            <line x1="235" y1="50" x2="280" y2="50" class="ld-wire"/>
+            <!-- M0 自锁并联 -->
+            <line x1="100" y1="50" x2="100" y2="90" class="ld-wire"/>
+            <line x1="100" y1="90" x2="280" y2="90" class="ld-wire"/>
+            <line x1="280" y1="50" x2="280" y2="90" class="ld-wire"/>
+            <!-- M0 常开（自锁触点）-->
+            <line x1="170" y1="80" x2="170" y2="100" class="ld-no"/>
+            <line x1="185" y1="80" x2="185" y2="100" class="ld-no"/>
+            <text x="177" y="75" class="ld-text">M0</text>
+            <text x="177" y="112" class="ld-addr">自锁</text>
+            <line x1="280" y1="50" x2="680" y2="50" class="ld-wire"/>
+            <!-- M0 线圈 -->
+            <circle cx="690" cy="50" r="12" class="ld-coil"/>
+            <text x="690" y="54" class="ld-text">M0</text>
+            <text x="690" y="75" class="ld-addr">运行标志</text>
+            <line x1="702" y1="50" x2="730" y2="50" class="ld-wire"/>
+
+            <!-- Network 2: 黄灯 Y1 = /M0 AND X5 -->
+            <text x="40" y="148" class="ld-net">Network 2：待机黄灯 Y1（A灯）</text>
+            <line x1="30" y1="170" x2="100" y2="170" class="ld-wire"/>
+            <!-- /M0 常闭 -->
+            <line x1="100" y1="160" x2="100" y2="180" class="ld-nc"/>
+            <line x1="115" y1="160" x2="115" y2="180" class="ld-nc"/>
+            <line x1="98" y1="158" x2="117" y2="182" class="ld-nc"/>
+            <text x="107" y="155" class="ld-text">M0</text>
+            <text x="107" y="195" class="ld-addr">非运行</text>
+            <line x1="115" y1="170" x2="180" y2="170" class="ld-wire"/>
+            <!-- X5 常开（急停正常时接通）-->
+            <line x1="180" y1="160" x2="180" y2="180" class="ld-no"/>
+            <line x1="195" y1="160" x2="195" y2="180" class="ld-no"/>
+            <text x="187" y="155" class="ld-text">X5</text>
+            <text x="187" y="195" class="ld-addr">急停正常</text>
+            <line x1="195" y1="170" x2="680" y2="170" class="ld-wire"/>
+            <circle cx="690" cy="170" r="12" class="ld-coil"/>
+            <text x="690" y="174" class="ld-text" style="fill:#eab308">Y1</text>
+            <text x="690" y="195" class="ld-addr">A黄灯·待机</text>
+            <line x1="702" y1="170" x2="730" y2="170" class="ld-wire"/>
+
+            <!-- Network 3: 绿灯 Y2 = M0 -->
+            <text x="40" y="228" class="ld-net">Network 3：运行绿灯 Y2（B灯）</text>
+            <line x1="30" y1="250" x2="100" y2="250" class="ld-wire"/>
+            <line x1="100" y1="240" x2="100" y2="260" class="ld-no"/>
+            <line x1="115" y1="240" x2="115" y2="260" class="ld-no"/>
+            <text x="107" y="235" class="ld-text">M0</text>
+            <text x="107" y="275" class="ld-addr">运行中</text>
+            <line x1="115" y1="250" x2="680" y2="250" class="ld-wire"/>
+            <circle cx="690" cy="250" r="12" class="ld-coil"/>
+            <text x="690" y="254" class="ld-text" style="fill:#22c55e">Y2</text>
+            <text x="690" y="275" class="ld-addr">B绿灯·运行</text>
+            <line x1="702" y1="250" x2="730" y2="250" class="ld-wire"/>
+
+            <!-- Network 4: 红灯 Y3 = /X5 OR X1 -->
+            <text x="40" y="308" class="ld-net">Network 4：停止红灯 Y3（C灯）</text>
+            <line x1="30" y1="330" x2="100" y2="330" class="ld-wire"/>
+            <!-- /X5 常闭（急停按下时断开→但这里用常闭触点，急停按下时X5断开，/X5接通）-->
+            <line x1="100" y1="320" x2="100" y2="340" class="ld-nc"/>
+            <line x1="115" y1="320" x2="115" y2="340" class="ld-nc"/>
+            <line x1="98" y1="318" x2="117" y2="342" class="ld-nc"/>
+            <text x="107" y="315" class="ld-text">X5</text>
+            <text x="107" y="355" class="ld-addr">急停按下</text>
+            <line x1="115" y1="330" x2="160" y2="330" class="ld-wire"/>
+            <!-- 并联 X1 -->
+            <line x1="100" y1="330" x2="100" y2="370" class="ld-wire"/>
+            <line x1="100" y1="370" x2="160" y2="370" class="ld-wire"/>
+            <line x1="160" y1="330" x2="160" y2="370" class="ld-wire"/>
+            <line x1="120" y1="360" x2="120" y2="380" class="ld-no"/>
+            <line x1="135" y1="360" x2="135" y2="380" class="ld-no"/>
+            <text x="127" y="355" class="ld-text">X1</text>
+            <text x="127" y="395" class="ld-addr">停止按下</text>
+            <line x1="160" y1="330" x2="680" y2="330" class="ld-wire"/>
+            <circle cx="690" cy="330" r="12" class="ld-coil"/>
+            <text x="690" y="334" class="ld-text" style="fill:#ef4444">Y3</text>
+            <text x="690" y="355" class="ld-addr">C红灯·停止</text>
+            <line x1="702" y1="330" x2="730" y2="330" class="ld-wire"/>
+
+            <!-- Network 5: 气缸伸出 Y0 = M0 AND SQ2 -->
+            <text x="40" y="418" class="ld-net">Network 5：气缸伸出控制 Y0（KA→YV）</text>
+            <line x1="30" y1="440" x2="100" y2="440" class="ld-wire"/>
+            <line x1="100" y1="430" x2="100" y2="450" class="ld-no"/>
+            <line x1="115" y1="430" x2="115" y2="450" class="ld-no"/>
+            <text x="107" y="425" class="ld-text">M0</text>
+            <text x="107" y="465" class="ld-addr">运行</text>
+            <line x1="115" y1="440" x2="180" y2="440" class="ld-wire"/>
+            <line x1="180" y1="430" x2="180" y2="450" class="ld-no"/>
+            <line x1="195" y1="430" x2="195" y2="450" class="ld-no"/>
+            <text x="187" y="425" class="ld-text">X4</text>
+            <text x="187" y="465" class="ld-addr">SQ2缩回位</text>
+            <line x1="195" y1="440" x2="260" y2="440" class="ld-wire"/>
+            <!-- /T0 常闭（延时未到接通，延时到断开）-->
+            <line x1="260" y1="430" x2="260" y2="450" class="ld-nc"/>
+            <line x1="275" y1="430" x2="275" y2="450" class="ld-nc"/>
+            <line x1="258" y1="428" x2="277" y2="452" class="ld-nc"/>
+            <text x="267" y="425" class="ld-text">T0</text>
+            <text x="267" y="465" class="ld-addr">延时断开</text>
+            <line x1="275" y1="440" x2="680" y2="440" class="ld-wire"/>
+            <circle cx="690" cy="440" r="12" class="ld-coil"/>
+            <text x="690" y="444" class="ld-text" style="fill:#22c55e">Y0</text>
+            <text x="690" y="465" class="ld-addr">KA→YV伸出</text>
+            <line x1="702" y1="440" x2="730" y2="440" class="ld-wire"/>
+
+            <!-- Network 6: 延时 T0 = SQ1 -->
+            <text x="40" y="498" class="ld-net">Network 6：伸出到位延时 T0（1秒后缩回）</text>
+            <line x1="30" y1="520" x2="100" y2="520" class="ld-wire"/>
+            <line x1="100" y1="510" x2="100" y2="530" class="ld-no"/>
+            <line x1="115" y1="510" x2="115" y2="530" class="ld-no"/>
+            <text x="107" y="505" class="ld-text">X3</text>
+            <text x="107" y="545" class="ld-addr">SQ1伸出位</text>
+            <line x1="115" y1="520" x2="200" y2="520" class="ld-wire"/>
+            <!-- 定时器方框 -->
+            <rect x="200" y="505" width="100" height="30" rx="3" class="ld-timer"/>
+            <text x="250" y="518" class="ld-text" style="fill:#f59e0b">TON T0</text>
+            <text x="250" y="530" class="ld-addr" style="fill:#f59e0b">K10 (1s)</text>
+            <line x1="300" y1="520" x2="730" y2="520" class="ld-wire"/>
+
+            <!-- 说明文字 -->
+            <text x="380" y="575" fill="#64748b" font-size="11" font-family="monospace" text-anchor="middle">| | 常开触点    |/| 常闭触点    ( ) 输出线圈    [TON] 通电延时定时器</text>
+            <text x="380" y="595" fill="#64748b" font-size="10" font-family="monospace" text-anchor="middle">信捷X3U系列：T0~T199为100ms定时器，K10=10×100ms=1秒</text>
+          </svg>
+        </div>
+      </div>
     </div>
-</div>
 
-<!-- 订单查询弹窗 -->
-<div id="orderModal" class="modal">
-    <div class="glass-panel border border-sky-500/30 w-full max-w-sm p-8 rounded-2xl text-center relative overflow-hidden">
-        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-sky-500 to-transparent"></div>
-        <h2 class="text-white font-bold mb-4 text-lg">自助订单查询</h2>
-        <input type="text" id="orderInput" placeholder="输入订单号或联系方式" class="w-full bg-slate-900/80 border border-slate-700 p-3.5 rounded-lg text-sky-100 mb-4 text-sm focus:outline-none focus:border-sky-400">
-        <button class="w-full bg-sky-600 hover:bg-sky-500 py-3 rounded-lg text-white mb-3 font-bold transition" onclick="document.getElementById('orderResult').innerText='没有查询到订单喔'">查询</button>
-        <p id="orderResult" class="text-red-400 text-sm font-bold mb-3 h-5 drop-shadow-[0_0_5px_rgba(248,113,113,0.5)]"></p>
-        <button class="w-full bg-slate-700/80 hover:bg-slate-600 py-3 rounded-lg text-slate-300 transition" onclick="closeModal('orderModal');document.getElementById('orderResult').innerText=''">返回</button>
+    <!-- 指令表 -->
+    <div class="program-pane" id="pane-code">
+      <div class="ladder-code"><span class="cm">(* ===== X3U-18MT 气缸自动往返控制程序 ===== *)</span>
+<span class="cm">(* 灯逻辑：待机=Y1黄  运行=Y2绿  停止=Y3红 *)</span>
+
+<span class="kw">Network 1</span>  <span class="cm">// 运行自锁（启保停）</span>
+  <span class="dev">LD</span>   <span class="num">X0</span>     <span class="cm">// SB1启动按钮</span>
+  <span class="dev">OR</span>   <span class="num">M0</span>     <span class="cm">// 自锁触点</span>
+  <span class="dev">ANI</span>  <span class="num">X1</span>     <span class="cm">// SB2停止按钮（常闭逻辑）</span>
+  <span class="dev">ANI</span>  <span class="num">X5</span>     <span class="cm">// 急停常闭，正常接通</span>
+  <span class="dev">OUT</span>  <span class="num">M0</span>     <span class="cm">// 运行标志</span>
+
+<span class="kw">Network 2</span>  <span class="cm">// 待机黄灯 Y1 = 非运行 AND 急停正常</span>
+  <span class="dev">LDI</span>  <span class="num">M0</span>     <span class="cm">// 非运行</span>
+  <span class="dev">AND</span>  <span class="num">X5</span>     <span class="cm">// 急停正常</span>
+  <span class="dev">OUT</span>  <span class="num">Y1</span>     <span class="cm">// A黄灯亮</span>
+
+<span class="kw">Network 3</span>  <span class="cm">// 运行绿灯 Y2 = 运行中</span>
+  <span class="dev">LD</span>   <span class="num">M0</span>
+  <span class="dev">OUT</span>  <span class="num">Y2</span>     <span class="cm">// B绿灯亮</span>
+
+<span class="kw">Network 4</span>  <span class="cm">// 停止红灯 Y3 = 急停按下 OR 停止按下</span>
+  <span class="dev">LDI</span>  <span class="num">X5</span>     <span class="cm">// 急停按下（X5断开→LDI接通）</span>
+  <span class="dev">OR</span>   <span class="num">X1</span>     <span class="cm">// 停止按钮按下</span>
+  <span class="dev">OUT</span>  <span class="num">Y3</span>     <span class="cm">// C红灯亮</span>
+
+<span class="kw">Network 5</span>  <span class="cm">// 气缸伸出 Y0 = 运行 AND 在缩回位 AND 未到延时</span>
+  <span class="dev">LD</span>   <span class="num">M0</span>     <span class="cm">// 运行中</span>
+  <span class="dev">AND</span>  <span class="num">X4</span>     <span class="cm">// SQ2缩回到位</span>
+  <span class="dev">ANI</span>  <span class="num">T0</span>     <span class="cm">// 延时未到</span>
+  <span class="dev">OUT</span>  <span class="num">Y0</span>     <span class="cm">// KA吸合→YV得电→气缸伸出</span>
+
+<span class="kw">Network 6</span>  <span class="cm">// 伸出到位延时1秒</span>
+  <span class="dev">LD</span>   <span class="num">X3</span>     <span class="cm">// SQ1伸出到位</span>
+  <span class="dev">OUT</span>  <span class="num">T0</span>     <span class="cm">// K10 延时1秒（100ms×10）</span>
+  <span class="cm">// 延时到→T0常闭断开→Y0失电→气缸缩回</span>
+  <span class="cm">// 缩回到位SQ2接通→Y0再次得电→循环</span>
+
+<span class="cm">(* ===== 程序结束 ===== *)</span></div>
     </div>
-</div>
 
-<!-- 退款弹窗 -->
-<div id="refundModal" class="modal">
-    <div class="glass-panel border border-orange-500/40 w-full max-w-sm p-8 rounded-2xl text-center relative overflow-hidden">
-        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-orange-500 to-transparent"></div>
-        <div class="w-16 h-16 bg-orange-900/50 rounded-full flex items-center justify-center mx-auto mb-4 border border-orange-500/30 shadow-[0_0_15px_rgba(249,115,22,0.3)]">
-            <span class="text-3xl">💰</span>
+    <!-- 程序说明 -->
+    <div class="program-pane" id="pane-explain">
+      <div style="display:grid;gap:16px">
+        <div class="card">
+          <div class="card-title"><span class="badge" style="background:rgba(234,179,8,.15);color:var(--yellow)">Network 1</span>运行自锁</div>
+          <p style="font-size:13px;color:var(--text-dim)">经典启保停电路。按下SB1(X0)，M0得电并通过自身常开触点自锁保持。按下SB2(X1)或拍下急停(X5断开)，M0失电，系统停止。急停用常闭触点串联，保证断线时也能停止。</p>
         </div>
-        <h2 class="text-white font-bold mb-2 text-lg">系统提示</h2>
-        <p class="text-slate-300 mb-8 font-bold text-base tracking-wide">您还可以下订单喔</p>
-        <div class="flex gap-4">
-            <button class="flex-1 bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 py-3.5 rounded-xl text-white transition font-bold shadow-[0_0_15px_rgba(2,132,199,0.4)]" onclick="closeModal('refundModal'); document.getElementById('product-list').scrollIntoView({behavior: 'smooth', block: 'center'})">去下单</button>
-            <button class="flex-1 bg-slate-700/80 hover:bg-slate-600 py-3.5 rounded-xl text-slate-300 transition font-bold border border-slate-600" onclick="closeModal('refundModal')">取消</button>
+        <div class="card">
+          <div class="card-title"><span class="badge" style="background:rgba(234,179,8,.15);color:var(--yellow)">Network 2</span>待机黄灯 Y1</div>
+          <p style="font-size:13px;color:var(--text-dim)"><b>非运行(M0常闭) AND 急停正常(X5常开接通)</b>时，Y1输出，黄灯A亮。表示系统上电就绪、等待启动。运行中或急停时黄灯灭。</p>
         </div>
+        <div class="card">
+          <div class="card-title"><span class="badge" style="background:rgba(34,197,94,.15);color:var(--green)">Network 3</span>运行绿灯 Y2</div>
+          <p style="font-size:13px;color:var(--text-dim)">M0接通（运行中）时，Y2输出，绿灯B亮。直接跟随运行标志，最直观。</p>
+        </div>
+        <div class="card">
+          <div class="card-title"><span class="badge" style="background:rgba(239,68,68,.15);color:var(--red)">Network 4</span>停止红灯 Y3</div>
+          <p style="font-size:13px;color:var(--text-dim)"><b>急停按下(X5常闭→LDI接通) OR 停止按钮按下(X1)</b>时，Y3输出，红灯C亮。注意：SB2是点动按钮，按下瞬间红灯亮，松开后如果M0已断开则系统回到待机黄灯状态。</p>
+        </div>
+        <div class="card">
+          <div class="card-title"><span class="badge" style="background:rgba(34,197,94,.15);color:var(--green)">Network 5</span>气缸伸出 Y0</div>
+          <p style="font-size:13px;color:var(--text-dim)"><b>运行(M0) AND 缩回到位(SQ2/X4) AND 延时未到(T0常闭)</b>时，Y0输出→KA吸合→YV得电→气缸伸出。这是自动循环的核心：只要在运行状态且气缸在缩回位，就自动伸出。</p>
+        </div>
+        <div class="card">
+          <div class="card-title"><span class="badge" style="background:rgba(245,158,11,.15);color:var(--accent)">Network 6</span>到位延时 T0</div>
+          <p style="font-size:13px;color:var(--text-dim)">气缸伸出到位SQ1(X3)触发后，定时器T0开始计时（K10=1秒）。1秒后T0常闭触点断开→Y0失电→YV失电→气缸缩回。缩回到位后SQ2接通，Y0再次得电，如此循环往复。需要改停留时间就改K值（K20=2秒）。</p>
+        </div>
+        <div class="card" style="border-left:3px solid var(--accent)">
+          <div class="card-title"><span class="badge">工作循环</span>完整时序</div>
+          <p style="font-size:13px;color:var(--text-dim);line-height:2">
+            ① 上电 → 黄灯亮(待机)，气缸在缩回位(SQ2通)<br>
+            ② 按SB1 → M0自锁 → 绿灯亮、黄灯灭 → Y0输出 → 气缸伸出<br>
+            ③ 伸出到位 → SQ1通 → T0计时1秒<br>
+            ④ 延时到 → T0常闭断 → Y0断 → 气缸缩回<br>
+            ⑤ 缩回到位 → SQ2通 → Y0再次输出 → 重复②~⑤（自动循环）<br>
+            ⑥ 按SB2 → M0断 → 绿灯灭、红灯亮 → 完成当前动作后停在缩回位 → 黄灯亮(待机)<br>
+            ⑦ 拍急停 → M0断、所有输出断 → 红灯亮 → 气缸保持当前位置
+          </p>
+        </div>
+      </div>
     </div>
-</div>
+  </div>
+</section>
 
-<!-- 支付弹窗 -->
-<div id="payModal" class="modal">
-    <div class="glass-panel border border-sky-500/40 w-full max-w-sm p-6 rounded-2xl text-center relative">
-        <h2 class="text-white font-bold mb-4 text-lg" id="payTitle">扫码支付</h2>
-        
-        <!-- 显示支付金额 -->
-        <div class="mb-4 p-3 bg-slate-900/50 rounded-xl border border-sky-500/20">
-            <p class="text-slate-400 text-xs">需支付金额</p>
-            <p id="pay-amount-display" class="text-2xl font-bold text-sky-400 neon-text">¥0.00</p>
-        </div>
-
-        <div class="flex justify-center mb-4 relative">
-            <div class="absolute inset-0 border-2 border-sky-500/50 rounded-lg w-44 h-44 left-1/2 -translate-x-1/2 animate-pulse pointer-events-none"></div>
-            <img id="qrImg" src="" class="w-44 h-44 bg-white rounded-lg p-2 object-cover shadow-[0_0_20px_rgba(56,189,248,0.2)]">
-        </div>
-        
-        <div class="bg-red-900/40 border border-red-500/50 p-3 rounded-xl mb-4 text-left shadow-[0_0_15px_rgba(239,68,68,0.15)]">
-            <p class="text-red-400 text-xs font-bold mb-1.5 flex items-center gap-1">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                支付操作指引：
-            </p>
-            <p class="text-slate-300 text-[11px] leading-relaxed pl-5">
-                1. 请长按或截图保存二维码。<br>
-                2. 打开相应APP扫描相册中的图片。<br>
-                3. <span class="text-amber-400 font-bold border-b border-amber-400/50 pb-0.5">务必支付订单的精确金额</span>，多付或少付均无法自动识别到账。
-            </p>
-        </div>
-        
-        <p id="pay-status-msg" class="text-red-400 text-sm font-bold mb-4 h-5 drop-shadow-[0_0_5px_rgba(248,113,113,0.5)]"></p>
-
-        <div class="grid grid-cols-1 gap-2.5">
-            <button class="w-full bg-emerald-600 hover:bg-emerald-500 py-3.5 rounded-xl text-white text-sm font-bold shadow-[0_0_15px_rgba(16,185,129,0.4)] transition" id="jumpPayBtn" onclick="jumpPayApp()">截图后 一键跳转微信</button>
-            <button class="w-full bg-sky-600 hover:bg-sky-500 py-3.5 rounded-xl text-white text-sm font-bold shadow-[0_0_15px_rgba(2,132,199,0.4)] transition" onclick="document.getElementById('pay-status-msg').innerText='未收到支付成功请求，请重试'">已支付，跳转下载</button>
-            <button class="w-full bg-slate-700 hover:bg-slate-600 py-3 rounded-xl text-sky-300 text-sm font-bold border border-slate-600 transition" onclick="document.getElementById('pay-status-msg').innerText='未收到支付成功请求，请重试'">已支付，点击刷新</button>
-            <button class="w-full bg-transparent hover:bg-slate-800 py-3 rounded-xl text-slate-400 text-sm transition" onclick="closeModal('payModal')">取消支付</button>
-        </div>
-    </div>
-</div>
-
-<!-- 投诉弹窗 -->
-<div id="complainModal" class="modal">
-    <div class="glass-panel border border-red-500/40 w-full max-w-sm p-8 rounded-2xl text-center relative overflow-hidden">
-        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-red-500 to-transparent"></div>
-        <div class="w-16 h-16 bg-red-900/50 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-500/30 shadow-[0_0_15px_rgba(239,68,68,0.3)]">
-            <svg class="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-        </div>
-        <h2 class="text-white font-bold mb-2 text-lg">系统提示</h2>
-        <p class="text-slate-300 mb-8 font-bold text-base tracking-wide">您还可以下订单喔</p>
-        <div class="flex gap-4">
-            <button class="flex-1 bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 py-3.5 rounded-xl text-white transition font-bold shadow-[0_0_15px_rgba(2,132,199,0.4)]" onclick="closeModal('complainModal'); document.getElementById('product-list').scrollIntoView({behavior: 'smooth', block: 'center'})">去下单</button>
-            <button class="flex-1 bg-slate-700/80 hover:bg-slate-600 py-3.5 rounded-xl text-slate-300 transition font-bold border border-slate-600" onclick="closeModal('complainModal')">取消</button>
-        </div>
-    </div>
-</div>
+<footer>
+  <div class="wrap">
+    <div class="divider"></div>
+    X3U-18MT PLC 气动控制系统 · 电气技能节实训图解<br>
+    点击图中元件可查看详细说明 · 气动回路可动画演示
+  </div>
+</footer>
 
 <script>
-    const data = {
-        ios: [
-            { id: 'i1', name: '全系统CN', price: 108, tag: 'stable', tag2: 'reco', img: 'https://img.remit.ee/api/file/BQACAgUAAyEGAASHRsPbAAEX9JVqZtf_36Noa_LmEwu5sALTiPOHtwACkScAAj4IMVe8XWs7SQ7phj0E.jpg', desc: '支持iOS13.0 - iOS27系统巨魔 / 自签安装使用\n\n🔥核心功能\n  •✅定制绘制：透视清晰，极致流畅，不掉帧\n  •💎自瞄漏打：智能锁定暴露位，漏哪打哪，打伤害更顺手，实战体验更强，纯裸奔写法，高隐匿、低风险，大号首选\n\n🔐安全优化:Hook 断点封包,毫秒级拦截后端注入,检测前端数据不回传,不触发额外校验,优化高风险问题稳定性进一步提升\n\n无论是老系统还是高系统CN 均可流畅运行,告别环境焦虑,实现真正的全系统覆盖\n\n采用独家纯裸奔写法,无需端口隐蔽性更强,安装使用更便捷' },
-            { id: 'i2', name: 'Via全系统内透', price: 44, tag: 'fuli', desc: 'iOS全网唯一高系统内透\n\n无需电脑/无需越狱/无需巨魔 【利用网页漏洞在线安装科技！】无三方/无任何禁令\n\n利用Safari浏览器网站在线安装/简单方便上手\n\n【下单订单后会带使用教程/安装使用无任何担忧！】\n\n支持全系统' },
-            { id: 'i3', name: 'A全系统内透', price: 68, tag: 'reco', img: 'https://img.remit.ee/api/file/BQACAgUAAyEGAASHRsPbAAEX9JZqZtgarOzvoctDHgXHqm6IhYLh8wACkicAAj4IMVeZ6CzPCDA5Mj0E.jpg', desc: 'iOS高系统内透 使用事项和使用教程  https://1824696781.share.123pan.cn/123pan/xj4njv-VoAOd \n无需电脑/无需越狱/无需巨魔 【利用网页漏洞在线安装科技！】无三方/无任何禁令\n\n利用Safari浏览器网站在线安装/简单方便上手\n\n功能：内透\n【下单订单后会带使用教程/安装使用无任何担忧！】\n\n支持系统14.0-26.0 详细系统' },
-            { id: 'i4', name: 'ST巨魔', price: 138, tag: 'baopei', tag2: 'reco', img: 'https://img.remit.ee/api/file/BQACAgUAAyEGAASHRsPbAAEX9JNqZte55o--DlPBO-zRV8K_Ew1fsAACjScAAj4IMVcNoJsLCYjlvz0E.jpg', desc: '功能详情：观战/人数/方框/骨骼/信息/血量/距离/手持/背敌/人机/载具/投掷物/枪械/药品/盒子/盔甲/配件\n\n拍下后卡网会自动下发网盘及使用教程' },
-            { id: 'i5', name: 'NV单绘制', price: 58, tag: 'fuli', img: 'https://img.remit.ee/api/file/BQACAgUAAyEGAASHRsPbAAEX9JdqZtg8cGzCa98qJBlL-2u3yJaQYgACkycAAj4IMVdDnqHTzkWQtT0E.jpg', desc: '功能：人物绘制，物资绘制，模型渲染（掩体变色），手雷预警\n\n采用全新源码，最新内核读取写法，不同于市面上其他项目，安全系数更高，0追封0拉闸' },
-            { id: 'i6', name: 'SKC裸奔追踪', price: 99, tag: 'stable', tag2: 'reco', img: 'https://img.remit.ee/api/file/BQACAgUAAyEGAASHRsPbAAEX9I9qZteGtgMkmA7vSp269c7q1HuE0QACiScAAj4IMVf3Tbly9hufXz0E.jpg', desc: '选择地址： http://tb.9oc.cc' }
-        ],
-        'ios-all': [
-            { id: 'i7', name: '止痛药Air', price: 128, tag: 'reco', img: 'https://img.remit.ee/api/file/BQACAgUAAyEGAASHRsPbAAEX9JhqZtharEVDUE9BRa5KZ3eOhSpMTQAClScAAj4IMVd8ZuiH2lewNz0E.jpg', desc: '采用模型漏打/丝滑流畅不卡顿/多线程处理/极致流畅/稳定绘制 无后台运行/过直播/主播 俱乐部打手必备 更换全新源码,安全系数更高,采用不同于市面其他内核读取' },
-            { id: 'i8', name: 'Via-全火版', price: 98, tag: 'stable', img: 'https://img.remit.ee/api/file/BQACAgUAAyEGAASHRsPbAAEX9JRqZtfWfvozX4n9--Jxp7foPP2TEAACjycAAj4IMVdnl2buQx76-T0E.jpg', desc: 'Via和平全火版【内置端口 防Via里面的所有功能】\n\n绘制/物质/自瞄/360度自瞄/子弹追踪/掩体判断\n\n枪械功能：\n无后座力/子弹聚点/子弹变大/枪镜防抖/射击速度/切枪速度/开镜速度/无限子弹/单发自动/范围功能/头部范国/动态范围\n暴力功能：\n枪械魂环/自鸟功能/空中惯性/空中重力/跨越步高/人物跳高/人物加速/动作加速/开火加速/摩擦速度/跳跃速度/秒趴/火箭飞天/雷枪飞夭/腿飞天/范围拾取/探头飞天/探头路飞/马儿加速/所有载具加速/人物变大/敌人变大/广角FOV/开火肩射' },
-            { id: 'i9', name: '超人漏打', price: 118, tag: 'stable', img: 'https://img.remit.ee/api/file/BQACAgUAAyEGAASHRsPbAAEX9JlqZth9WorwH0hNxeJtSnF5Ggh4IgAClycAAj4IMVdSirmt51AFNz0E.jpg', desc: '透视/漏打自瞄/物资/骨骼/名字/射线/方框\n\n下载地址和教程：iosc.cc' }
-        ],
-        android: [
-            { id: 'i10', name: '万达漏打追踪', price: 68, tag: 'baopei', desc: '万达御尊漏打  https://www.123865.com/s/ITAtTd-7Qiwh\n\n特色功能\n变色漏打 漏那打那 长久稳定 牛尔比之\n自描 绘制 漏打 物资绘制 应有尽有' },
-            { id: 'i11', name: '和平VS陀螺仪模型漏打', price: 58, tag: 'reco', img: 'https://img.remit.ee/api/file/BQACAgUAAyEGAASHRsPbAAEX9JxqZti27D_Ij57OzSmpqGxTCnEbJwACmycAAj4IMVdQwb9U3haaLj0E.jpg', desc: '极致丝滑流畅不卡顿 高清绘图 不怕找不到敌人\n大部分人物绘制 物资 载具可DIY颜色 \n追踪极致优化 开镜 腰射 喷子 狙击 弓箭 可单独调概率\n行业最先进的陀螺仪自瞄写法淘汰掉泛滥模块版\n极致优化 全陀螺仪玩家 键鼠玩家 手搓玩家均可使用\nhttps://www.123865.com/s/s6GHjv-ZQbWH' },
-            { id: 'i12', name: 'Aipro白金', price: 48, tag: 'fuli', img: 'https://img.remit.ee/api/file/BQACAgUAAyEGAASHRsPbAAEX9JpqZtiQp2BpUdjvWJuthkM9pbH-oQACmScAAj4IMVcC5nogMsKMyj0E.jpg', desc: 'Aipro白金真硬件模型漏打追锁，真硬件级子弹追总 无需注入进程或修改游戏代码，采用业内领先的硬件内核技术，实现安全追总。\nPhysx碰撞模型漏打追总适配全枪械\n并非过检测追总用于蒙骗用户 欢迎打假，保证百分百分硬件' }
-        ]
+// ===== PLC 端子点击详情 =====
+const rows = document.querySelectorAll('.plc-row');
+const detailPanel = document.getElementById('detailPanel');
+
+rows.forEach(row => {
+  row.addEventListener('click', () => {
+    rows.forEach(r => r.classList.remove('active'));
+    row.classList.add('active');
+    const d = row.dataset;
+    const typeLabel = d.type === 'in' ? '输入点' : '输出点';
+    const typeClass = d.type === 'in' ? 'in' : 'out';
+    detailPanel.classList.remove('empty');
+    detailPanel.innerHTML = `
+      <h4>
+        <span class="term ${typeClass}">${d.term}</span>
+        ${d.name}
+        <span style="font-size:12px;color:var(--text-mute);font-weight:400;margin-left:8px">${typeLabel} · ${d.comp}</span>
+      </h4>
+      <p><b style="color:var(--text)">接线方式：</b>${d.wire}</p>
+      <p><b style="color:var(--text)">功能说明：</b>${d.func}</p>
+      <div class="spec-grid">
+        <div class="spec"><div class="k">元件类型</div><div class="v">${d.comp}</div></div>
+        <div class="spec"><div class="k">触点形式</div><div class="v">${d.note.includes('常闭') ? '常闭 NC' : '常开 NO'}</div></div>
+        <div class="spec"><div class="k">有效电平</div><div class="v">${d.type === 'in' ? '高电平 24V' : '输出高电平'}</div></div>
+        <div class="spec"><div class="k">备注</div><div class="v" style="font-size:12px">${d.note}</div></div>
+      </div>
+    `;
+  });
+});
+
+// ===== 气缸动画 =====
+const piston = document.getElementById('piston');
+const pipe1 = document.getElementById('pipe1');
+const pipe2 = document.getElementById('pipe2');
+const pipe4 = document.getElementById('pipe4');
+const mainPipe = document.getElementById('mainPipe');
+const valvePos1 = document.getElementById('valvePos1');
+const valvePos2 = document.getElementById('valvePos2');
+const sq1Led = document.getElementById('sq1Led');
+const sq2Led = document.getElementById('sq2Led');
+const stateText = document.getElementById('stateText');
+const btnExtend = document.getElementById('btnExtend');
+const btnRetract = document.getElementById('btnRetract');
+
+let animTimer = null;
+let autoTimer = null;
+let currentState = 'retract'; // retract | extend
+
+function setCylinderPos(pos) {
+  // pos: 0=缩回, 1=伸出
+  const x = 480 + pos * 80; // 活塞x位置
+  piston.style.transform = `translateX(${pos * 80}px)`;
+  piston.style.transition = 'transform 1.2s ease-in-out';
+}
+
+function setValveState(energized) {
+  if (energized) {
+    valvePos1.style.opacity = '0.3';
+    valvePos2.style.opacity = '1';
+  } else {
+    valvePos1.style.opacity = '1';
+    valvePos2.style.opacity = '0.3';
+  }
+}
+
+function setAirFlow(energized) {
+  // 重置所有管路颜色
+  [mainPipe, pipe1, pipe2, pipe4].forEach(p => {
+    p.setAttribute('stroke', '#94a3b8');
+    p.setAttribute('stroke-width', '2.5');
+  });
+
+  if (energized) {
+    // YV得电：1->4进气(红)，2->5排气
+    mainPipe.setAttribute('stroke', '#ef4444');
+    pipe1.setAttribute('stroke', '#ef4444');
+    pipe4.setAttribute('stroke', '#ef4444');
+    pipe2.setAttribute('stroke', '#475569'); // 排气
+  } else {
+    // YV失电：1->2进气(红)，4->3排气
+    mainPipe.setAttribute('stroke', '#ef4444');
+    pipe1.setAttribute('stroke', '#ef4444');
+    pipe2.setAttribute('stroke', '#ef4444');
+    pipe4.setAttribute('stroke', '#475569'); // 排气
+  }
+}
+
+function setSQ(state) {
+  // state: 'retract' | 'extend' | 'moving'
+  if (state === 'retract') {
+    sq2Led.setAttribute('fill', '#22c55e');
+    sq2Led.style.filter = 'drop-shadow(0 0 4px #22c55e)';
+    sq1Led.setAttribute('fill', '#3b82f6');
+    sq1Led.style.filter = 'none';
+  } else if (state === 'extend') {
+    sq1Led.setAttribute('fill', '#22c55e');
+    sq1Led.style.filter = 'drop-shadow(0 0 4px #22c55e)';
+    sq2Led.setAttribute('fill', '#3b82f6');
+    sq2Led.style.filter = 'none';
+  } else {
+    sq1Led.setAttribute('fill', '#3b82f6');
+    sq2Led.setAttribute('fill', '#3b82f6');
+    sq1Led.style.filter = 'none';
+    sq2Led.style.filter = 'none';
+  }
+}
+
+function animateCylinder(action) {
+  clearTimeout(animTimer);
+  clearInterval(autoTimer);
+  btnExtend.classList.remove('active');
+  btnRetract.classList.remove('active');
+
+  if (action === 'extend') {
+    btnExtend.classList.add('active');
+    currentState = 'extend';
+    setValveState(true);
+    setAirFlow(true);
+    setSQ('moving');
+    stateText.textContent = '当前状态：气缸伸出中…（YV得电，无杆腔进气）';
+    stateText.setAttribute('fill', '#f59e0b');
+    setCylinderPos(1);
+    animTimer = setTimeout(() => {
+      setSQ('extend');
+      stateText.textContent = '当前状态：气缸伸出到位（SQ1触发）';
+      stateText.setAttribute('fill', '#22c55e');
+    }, 1200);
+  } else if (action === 'retract') {
+    btnRetract.classList.add('active');
+    currentState = 'retract';
+    setValveState(false);
+    setAirFlow(false);
+    setSQ('moving');
+    stateText.textContent = '当前状态：气缸缩回中…（YV失电，有杆腔进气）';
+    stateText.setAttribute('fill', '#f59e0b');
+    setCylinderPos(0);
+    animTimer = setTimeout(() => {
+      setSQ('retract');
+      stateText.textContent = '当前状态：气缸缩回到位（SQ2触发）';
+      stateText.setAttribute('fill', '#22c55e');
+    }, 1200);
+  } else if (action === 'auto') {
+    let step = 0;
+    const steps = ['extend', 'retract'];
+    const runStep = () => {
+      animateCylinder(steps[step]);
+      step = (step + 1) % 2;
     };
+    runStep();
+    autoTimer = setInterval(runStep, 2200);
+    stateText.textContent = '当前状态：自动循环演示中…';
+    stateText.setAttribute('fill', '#f59e0b');
+  }
+}
 
-    // 商品价格从低到高排序
-    Object.keys(data).forEach(key => {
-        data[key].sort((a, b) => a.price - b.price);
-    });
+// 初始化
+setSQ('retract');
+setCylinderPos(0);
+setValveState(false);
 
-    let selectedData = null;
+// 平滑滚动（导航）
+document.querySelectorAll('.nav-links a').forEach(a => {
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    const target = document.querySelector(a.getAttribute('href'));
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+});
 
-    // 自定义轻量消息提示 (代替浏览器默认 alert)
-    function showCustomAlert(msg) {
-        const toast = document.getElementById('toastMessage');
-        toast.innerText = msg;
-        toast.style.display = 'block';
-        setTimeout(() => toast.style.opacity = '1', 10);
-        setTimeout(() => {
-            toast.style.opacity = '0';
-            setTimeout(() => toast.style.display = 'none', 300);
-        }, 3000);
-    }
+// ===== 程序标签切换 =====
+function switchTab(name){
+  document.querySelectorAll('.program-tab').forEach((t,i)=>{
+    t.classList.toggle('active', ['ladder','code','explain'][i]===name);
+  });
+  document.querySelectorAll('.program-pane').forEach(p=>p.classList.remove('active'));
+  document.getElementById('pane-'+name).classList.add('active');
+}
 
-    function getTagHtml(tag, name, tag2) {
-        let html = '';
-        if (name === 'Via全系统内透') html += '<span class="text-[10px] tag-stable px-1.5 py-0.5 rounded shadow-sm ml-2 font-bold">(福利价)</span><span class="text-[10px] tag-stable px-1.5 py-0.5 rounded shadow-sm ml-2 font-bold">(稳定)</span>';
-        else {
-            if (tag === 'reco') html += '<span class="text-[10px] tag-reco px-1.5 py-0.5 rounded shadow-sm ml-2 font-bold">(推荐)</span>';
-            if (tag === 'fuli') html += '<span class="text-[10px] tag-stable px-1.5 py-0.5 rounded shadow-sm ml-2 font-bold">(福利价)</span>';
-            if (tag === 'baopei') html += '<span class="text-[10px] tag-stable px-1.5 py-0.5 rounded shadow-sm ml-2 font-bold">(封号包赔(高端局必备))</span>';
-            if (tag === 'stable') html += '<span class="text-[10px] tag-stable px-1.5 py-0.5 rounded shadow-sm ml-2 font-bold">(稳定(封号包退))</span>';
-        }
-        if (tag2 === 'reco') html += '<span class="text-[10px] tag-reco px-1.5 py-0.5 rounded shadow-sm ml-2 font-bold">(推荐)</span>';
-        return html;
-    }
+// ===== 系统联动动画 =====
+let sysAutoTimer = null;
+let sysStepTimer = null;
+let sysRunning = false;
+let sysEstopped = false;
 
-    function showTab(key, btn) {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        const container = document.getElementById('product-list');
-        container.innerHTML = '';
-        data[key].forEach(p => {
-            container.innerHTML += `<div class="product-card cursor-pointer bg-slate-800/60 p-4 rounded-xl mb-3" onclick="selectProduct('${p.id}', '${key}', this)">
-                <div class="font-bold text-white flex items-center">${p.name}${getTagHtml(p.tag, p.name, p.tag2)}</div>
-                <div class="text-sky-400 font-bold mt-2 text-sm drop-shadow-[0_0_2px_rgba(56,189,248,0.8)]">¥${p.price.toFixed(2)}</div>
-            </div>`;
-        });
-        document.getElementById('selected-box').classList.add('hidden');
-        document.getElementById('price-display').innerText = '¥0.00';
-        selectedData = null;
-    }
+function setLed(id, on, color){
+  const el = document.getElementById(id);
+  if(!el) return;
+  if(on){
+    el.setAttribute('fill', color || '#22c55e');
+    el.style.filter = `drop-shadow(0 0 5px ${color||'#22c55e'})`;
+  } else {
+    el.setAttribute('fill', '#334155');
+    el.style.filter = 'none';
+  }
+}
 
-    function selectProduct(id, key, el) {
-        document.querySelectorAll('.product-card').forEach(c => c.classList.remove('selected'));
-        el.classList.add('selected');
-        selectedData = data[key].find(item => item.id === id);
-        document.getElementById('selected-box').classList.remove('hidden');
-        document.getElementById('sel-name').innerText = selectedData.name;
-        
-        const descContainer = document.getElementById('sel-desc');
-        descContainer.innerHTML = ''; // 清空原本的节点内容
-        
-        // 动态注入产品图片（限制最大高度48、等比例缩放居中展示）
-        if (selectedData.img) {
-            descContainer.innerHTML += `<img src="${selectedData.img}" class="max-w-full h-auto max-h-48 object-contain mx-auto block rounded-lg mb-3 shadow-[0_0_10px_rgba(56,189,248,0.15)] border border-slate-700/50" alt="${selectedData.name}">`;
-        }
-        
-        // 追加原本的文本介绍，保证格式不乱
-        const textNode = document.createElement('div');
-        textNode.innerText = selectedData.desc;
-        descContainer.appendChild(textNode);
-        
-        document.getElementById('price-display').innerText = '¥' + selectedData.price.toFixed(2);
-        
-        // 自动滚动到详情框
-        setTimeout(() => {
-            document.getElementById('selected-box').scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }, 100);
-    }
+function setLamp(color, on){
+  const glow = document.getElementById('glow'+color);
+  const wire = document.getElementById('outY'+ (color==='Y'?'1':color==='G'?'2':'3'));
+  if(!glow) return;
+  if(on){
+    glow.setAttribute('opacity', '0.8');
+    glow.style.filter = `drop-shadow(0 0 8px ${color==='Y'?'#eab308':color==='G'?'#22c55e':'#ef4444'})`;
+    if(wire){ wire.setAttribute('stroke','#f59e0b'); wire.setAttribute('stroke-width','2.5'); }
+  } else {
+    glow.setAttribute('opacity', '0.15');
+    glow.style.filter = 'none';
+    if(wire){ wire.setAttribute('stroke','#475569'); wire.setAttribute('stroke-width','1.5'); }
+  }
+}
 
-    function jumpPayApp() {
-        const payMethod = document.querySelector('input[name="payMethod"]:checked').value;
-        if (payMethod === 'wechat') {
-            window.location.href='weixin://';
+function setSigWire(id, on){
+  const el = document.getElementById(id);
+  if(!el) return;
+  if(on){ el.setAttribute('stroke','#f59e0b'); el.setAttribute('stroke-width','2.5'); }
+  else { el.setAttribute('stroke','#475569'); el.setAttribute('stroke-width','1.5'); }
+}
+
+function setKA(energized){
+  const coil = document.getElementById('kaCoil');
+  const arm = document.getElementById('kaArm');
+  const wireY0 = document.getElementById('outY0');
+  const wireYV = document.getElementById('wireToYV');
+  if(energized){
+    coil.setAttribute('stroke','#22c55e');
+    coil.style.filter = 'drop-shadow(0 0 6px #22c55e)';
+    arm.setAttribute('x2','685'); arm.setAttribute('y2','210'); // 吸合
+    if(wireY0){ wireY0.setAttribute('stroke','#f59e0b'); wireY0.setAttribute('stroke-width','2.5'); }
+    if(wireYV){ wireYV.setAttribute('stroke','#ef4444'); wireYV.setAttribute('stroke-width','2.5'); }
+  } else {
+    coil.setAttribute('stroke','#22c55e');
+    coil.style.filter = 'none';
+    arm.setAttribute('x2','685'); arm.setAttribute('y2','185'); // 断开
+    if(wireY0){ wireY0.setAttribute('stroke','#475569'); wireY0.setAttribute('stroke-width','1.5'); }
+    if(wireYV){ wireYV.setAttribute('stroke','#475569'); wireYV.setAttribute('stroke-width','1.5'); }
+  }
+}
+
+function setYV(energized){
+  const coil = document.getElementById('yvCoil');
+  const p2 = document.getElementById('airPipe2');
+  const p4 = document.getElementById('airPipe4');
+  if(energized){
+    coil.setAttribute('stroke','#f59e0b');
+    coil.style.filter = 'drop-shadow(0 0 6px #f59e0b)';
+    if(p4){ p4.setAttribute('stroke','#ef4444'); p4.setAttribute('stroke-width','2.5'); } // 无杆腔进气
+    if(p2){ p2.setAttribute('stroke','#475569'); p2.setAttribute('stroke-width','1.5'); } // 有杆腔排气
+  } else {
+    coil.setAttribute('stroke','#f59e0b');
+    coil.style.filter = 'none';
+    if(p2){ p2.setAttribute('stroke','#ef4444'); p2.setAttribute('stroke-width','2.5'); } // 有杆腔进气
+    if(p4){ p4.setAttribute('stroke','#475569'); p4.setAttribute('stroke-width','1.5'); } // 无杆腔排气
+  }
+}
+
+function setSysPiston(pos){
+  const p = document.getElementById('sysPiston');
+  if(p) p.style.transform = `translateX(${pos*170}px)`;
+}
+
+function setSysSQ(pos){
+  if(pos==='retract'){
+    setLed('sysSq2Led', true, '#22c55e');
+    setLed('sysSq1Led', false);
+    setLed('sq2InLed', true, '#22c55e');
+    setLed('sq1InLed', false);
+    setLed('ledX4', true, '#3b82f6');
+    setLed('ledX3', false);
+    setSigWire('sigX4', true);
+    setSigWire('sigX3', false);
+  } else if(pos==='extend'){
+    setLed('sysSq1Led', true, '#22c55e');
+    setLed('sysSq2Led', false);
+    setLed('sq1InLed', true, '#22c55e');
+    setLed('sq2InLed', false);
+    setLed('ledX3', true, '#3b82f6');
+    setLed('ledX4', false);
+    setSigWire('sigX3', true);
+    setSigWire('sigX4', false);
+  } else {
+    setLed('sysSq1Led', false);
+    setLed('sysSq2Led', false);
+    setLed('sq1InLed', false);
+    setLed('sq2InLed', false);
+    setLed('ledX3', false);
+    setLed('ledX4', false);
+    setSigWire('sigX3', false);
+    setSigWire('sigX4', false);
+  }
+}
+
+function setSysState(text, dotColor){
+  document.getElementById('sysStateText').textContent = text;
+  const dot = document.getElementById('sysDot');
+  dot.className = 'st-dot' + (dotColor?' on':'');
+  if(dotColor) dot.style.background = dotColor;
+}
+
+function sysInit(){
+  sysRunning = false;
+  sysEstopped = false;
+  clearTimeout(sysStepTimer);
+  clearInterval(sysAutoTimer);
+  // 所有灯灭
+  setLamp('Y', false); setLamp('G', false); setLamp('R', false);
+  // 所有输出灭
+  setLed('ledY0',false); setLed('ledY1',false); setLed('ledY2',false); setLed('ledY3',false);
+  // 输入：急停正常(X5通)，SQ2通
+  setLed('ledX5', true, '#3b82f6');
+  setSigWire('sigX5', true);
+  setLed('ledX0',false); setLed('ledX1',false);
+  setSigWire('sigX0',false); setSigWire('sigX1',false);
+  // 气缸缩回
+  setSysPiston(0);
+  setSysSQ('retract');
+  setKA(false);
+  setYV(false);
+  // 待机：黄灯亮
+  setLamp('Y', true);
+  setLed('ledY1', true, '#eab308');
+  setSysState('待机中 — 黄灯A亮，气缸缩回，SQ2到位', '#eab308');
+}
+
+function sysAction(action){
+  clearTimeout(sysStepTimer);
+  clearInterval(sysAutoTimer);
+
+  if(action==='reset'){ sysInit(); return; }
+
+  if(action==='estop'){
+    sysEstopped = true;
+    sysRunning = false;
+    // 急停：X5断开
+    setLed('ledX5', false);
+    setSigWire('sigX5', false);
+    // 所有输出断
+    setLed('ledY0',false); setLed('ledY1',false); setLed('ledY2',false);
+    setKA(false); setYV(false);
+    // 红灯亮闪烁
+    setLamp('Y',false); setLamp('G',false);
+    let blink = 0;
+    sysAutoTimer = setInterval(()=>{
+      blink++;
+      const on = blink%2===0;
+      setLamp('R', on);
+      setLed('ledY3', on, '#ef4444');
+    }, 400);
+    setSysState('急停触发！— 所有输出切断，红灯C闪烁', '#ef4444');
+    return;
+  }
+
+  if(sysEstopped){
+    setSysState('请先按"复位"清除急停状态', '#ef4444');
+    return;
+  }
+
+  if(action==='stop'){
+    sysRunning = false;
+    // SB2按下
+    setLed('ledX1', true, '#3b82f6');
+    setSigWire('sigX1', true);
+    sysStepTimer = setTimeout(()=>{
+      setLed('ledX1', false);
+      setSigWire('sigX1', false);
+    }, 300);
+    // 停止：绿灯灭，红灯亮，Y0断
+    setLamp('G',false); setLed('ledY2',false);
+    setLamp('Y',false); setLed('ledY1',false);
+    setLamp('R',true); setLed('ledY3',true,'#ef4444');
+    setLed('ledY0',false); setKA(false); setYV(false);
+    setSysState('已停止 — 红灯C亮，气缸保持当前位置', '#ef4444');
+    sysStepTimer = setTimeout(()=>{
+      // 2秒后回到待机
+      setLamp('R',false); setLed('ledY3',false);
+      setLamp('Y',true); setLed('ledY1',true,'#eab308');
+      setSysState('待机中 — 黄灯A亮，等待启动', '#eab308');
+    }, 2000);
+    return;
+  }
+
+  if(action==='start' || action==='auto'){
+    sysRunning = true;
+    // SB1按下闪一下
+    setLed('ledX0', true, '#3b82f6');
+    setSigWire('sigX0', true);
+    sysStepTimer = setTimeout(()=>{
+      setLed('ledX0', false);
+      setSigWire('sigX0', false);
+    }, 300);
+    // 运行：绿灯亮，黄灯灭
+    setLamp('Y',false); setLed('ledY1',false);
+    setLamp('R',false); setLed('ledY3',false);
+    setLamp('G',true); setLed('ledY2',true,'#22c55e');
+    sysExtendCycle(action==='auto');
+  }
+}
+
+function sysExtendCycle(auto){
+  if(!sysRunning || sysEstopped) return;
+  // 伸出：Y0输出
+  setSysState('气缸伸出中 — Y0输出→KA吸合→YV得电，绿灯B亮', '#22c55e');
+  setLed('ledY0', true, '#22c55e');
+  setKA(true);
+  setYV(true);
+  setSysSQ('moving');
+  setSysPiston(1);
+  sysStepTimer = setTimeout(()=>{
+    // 伸出到位
+    setSysSQ('extend');
+    setSysState('伸出到位 — SQ1触发，延时1秒…', '#f59e0b');
+    sysStepTimer = setTimeout(()=>{
+      if(!sysRunning || sysEstopped) return;
+      // 缩回
+      setSysState('气缸缩回中 — Y0断开→YV失电，弹簧复位', '#3b82f6');
+      setLed('ledY0', false);
+      setKA(false);
+      setYV(false);
+      setSysSQ('moving');
+      setSysPiston(0);
+      sysStepTimer = setTimeout(()=>{
+        if(!sysRunning || sysEstopped) return;
+        setSysSQ('retract');
+        if(auto){
+          setSysState('缩回到位 — SQ2触发，自动循环…', '#22c55e');
+          sysStepTimer = setTimeout(()=>sysExtendCycle(true), 500);
         } else {
-            window.location.href='alipays://';
+          setSysState('一个循环完成 — 绿灯B亮，等待下次启动', '#22c55e');
+          sysRunning = false;
+          sysStepTimer = setTimeout(()=>{
+            setLamp('G',false); setLed('ledY2',false);
+            setLamp('Y',true); setLed('ledY1',true,'#eab308');
+            setSysState('待机中 — 黄灯A亮，等待启动', '#eab308');
+          }, 1500);
         }
-    }
+      }, 1200);
+    }, 1000);
+  }, 1200);
+}
 
-    function openModal(id) { 
-        const modal = document.getElementById(id);
-        modal.style.display = 'flex'; 
-        modal.firstElementChild.style.transform = 'scale(0.95)';
-        modal.firstElementChild.style.opacity = '0';
-        setTimeout(() => {
-            modal.firstElementChild.style.transition = 'all 0.2s ease-out';
-            modal.firstElementChild.style.transform = 'scale(1)';
-            modal.firstElementChild.style.opacity = '1';
-        }, 10);
-    }
-    
-    function closeModal(id) { 
-        document.getElementById(id).style.display = 'none'; 
-        if(id === 'payModal') document.getElementById('pay-status-msg').innerText = '';
-    }
-    
-
-    function updateJumpPayButton() {
-        const payMethod = document.querySelector('input[name="payMethod"]:checked').value;
-        const btn = document.getElementById('jumpPayBtn');
-        if (btn) {
-            btn.innerText = payMethod === 'wechat' ? '截图后 一键跳转微信' : '截图后 一键跳转支付宝';
-        }
-    }
-
-    document.querySelectorAll('input[name="payMethod"]').forEach(input => {
-        input.addEventListener('change', updateJumpPayButton);
-    });
-
-    function showPayModal() {
-        const contact = document.getElementById('contact').value;
-        if (!selectedData) { 
-            showCustomAlert('系统提示：请先选择您需要的商品！'); 
-            return; 
-        }
-        if (!contact) { 
-            showCustomAlert('系统提示：请先填写您的QQ或联系方式，方便为您发卡！'); 
-            return; 
-        }
-        
-        const payMethod = document.querySelector('input[name="payMethod"]:checked').value;
-        updateJumpPayButton();
-        const img = document.getElementById('qrImg');
-        document.getElementById('payTitle').innerText = payMethod === 'wechat' ? '微信扫码支付' : '支付宝扫码支付';
-        
-        // 绑定官方接口二维码
-        img.src = payMethod === 'wechat' 
-            ? 'https://img.remit.ee/api/file/BQACAgUAAyEGAASHRsPbAAEYTS9qbYhNyLjPTY8C4uh0FtNUFe_BVgAC4CEAAhvBcVcYjtSqlnh9tj0E.jpg' 
-            : 'https://img.remit.ee/api/file/BQACAgUAAyEGAASHRsPbAAEX5hBqZNvlP8tfNv7Z8xcLyf1_dvDQegAC8SwAApXfIFcpAtx-Zlr-7D0E.png';
-        
-        // 更新支付金额显示
-        document.getElementById('pay-amount-display').innerText = '¥' + selectedData.price.toFixed(2);
-        
-        openModal('payModal');
-    }
-
-    // 默认打开第一个Tab
-    showTab('ios', document.querySelector('.tab-btn'));
+// 初始化系统动画
+sysInit();
 </script>
 </body>
 </html>
